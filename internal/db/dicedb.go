@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"server/config"
 
@@ -32,6 +33,14 @@ func SetKey(key, value string) error {
 func GetKey(key string) (string, error) {
 	val, err := rdb.Get(ctx, key).Result()
 	return val, err
+}
+
+func DeleteKeys(keys []string) error {
+	if rdb == nil {
+		return fmt.Errorf("DiceDB client is not initialized")
+	}
+	err := rdb.Del(ctx, keys...).Err()
+	return err
 }
 
 func CloseDiceDB() {

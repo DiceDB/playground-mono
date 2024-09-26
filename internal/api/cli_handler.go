@@ -9,8 +9,42 @@ import (
 )
 
 type CommandRequest struct {
-	Key   string `json:"key"`
-	Value string `json:"value,omitempty"`
+	Key   string   `json:"key"`
+	Value string   `json:"value,omitempty"`
+	Keys  []string `json:"keys,omitempty"`
+}
+
+func handleSet(req CommandRequest) error {
+	if req.Key == "" || req.Value == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Key and Value are required")
+	}
+	err := db.SetKey(req.Key, req.Value)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to set key")
+	}
+	return echo.NewHTTPError(http.StatusOK, map[string]string{"result": "OK"})
+}
+
+func handleGet(req CommandRequest) error {
+	if req.Key == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Key is required")
+	}
+	result, err := db.GetKey(req.Key)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get key")
+	}
+	return echo.NewHTTPError(http.StatusOK, map[string]string{"key": req.Key, "value": result})
+}
+
+func handleDel(req CommandRequest) error {
+	if len(req.Keys) == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "At least one key is required for deletion")
+	}
+	err := db.DeleteKeys(req.Keys)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete keys")
+	}
+	return echo.NewHTTPError(http.StatusOK, map[string]string{"result": "OK"})
 }
 
 func cliHandler(c echo.Context) error {
@@ -26,24 +60,13 @@ func cliHandler(c echo.Context) error {
 
 	switch command {
 	case "set":
-		if req.Key == "" || req.Value == "" {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Key and Value are required"})
-		}
-		err := db.SetKey(req.Key, req.Value)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to set key"})
-		}
-		return c.JSON(http.StatusOK, map[string]string{"result": "OK"})
+		return handleSet(req)
 
 	case "get":
-		if req.Key == "" {
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Key is required"})
-		}
-		result, err := db.GetKey(req.Key)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to get key"})
-		}
-		return c.JSON(http.StatusOK, map[string]string{"key": req.Key, "value": result})
+		return handleGet(req)
+
+	case "del":
+		return handleDel(req)
 
 	default:
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid command"})
