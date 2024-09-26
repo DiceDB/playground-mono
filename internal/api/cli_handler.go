@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 
 	"server/internal/db"
@@ -19,7 +18,6 @@ func cliHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "command parser error | empty command"})
 	}
-	log.Println("Received command:", command)
 
 	var req CommandRequest
 	if err := c.Bind(&req); err != nil {
@@ -35,7 +33,7 @@ func cliHandler(c echo.Context) error {
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to set key"})
 		}
-		return c.JSON(http.StatusOK, map[string]string{"message": "Key set successfully"})
+		return c.JSON(http.StatusOK, map[string]string{"result": "OK"})
 
 	case "get":
 		if req.Key == "" {
