@@ -19,7 +19,7 @@ func LoadConfig() error {
 	}
 
 	AppConfig = Config{
-		DiceAddr: os.Getenv("DICE_ADDR"),
+		DiceAddr: os.Getenv("DICE_ADDR"), // "localhost:8000"
 	}
 
 	return nil

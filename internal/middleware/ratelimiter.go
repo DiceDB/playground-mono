@@ -6,7 +6,7 @@ import (
 
 func RateLimiter(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		// Implement rate limiting logic here
+		// implement rate limiting logic here
 		return next(c)
 	}
 }
