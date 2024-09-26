@@ -1,12 +1,11 @@
 package middleware
 
 import (
-	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
-func RateLimiter(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// implement rate limiting logic here
-		return next(c)
-	}
+func RateLimiter(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+	})
 }

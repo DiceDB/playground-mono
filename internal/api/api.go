@@ -1,18 +1,32 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
 )
 
-// this registers all API routes and middleware.
-func RegisterRoutes(e *echo.Echo) {
-	e.GET("/health", healthCheck)
-	e.POST("/cli:command", cliHandler)
-	e.GET("/search", searchHandler)
+func JSONResponse(w http.ResponseWriter, r *http.Request, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
-func healthCheck(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"message": "Server is running"})
+func RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/health", HealthCheck)
+	mux.HandleFunc("/cli", cliHandler)
+	mux.HandleFunc("/search", searchHandler)
+}
+
+func HealthCheck(w http.ResponseWriter, r *http.Request) {
+	JSONResponse(w, r, http.StatusOK, map[string]string{"message": "Server is running"})
+}
+
+func cliHandler(w http.ResponseWriter, r *http.Request) {
+	JSONResponse(w, r, http.StatusOK, map[string]string{"message": "cli handler"})
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	JSONResponse(w, r, http.StatusOK, map[string]string{"message": "Search results"})
 }
