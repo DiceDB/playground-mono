@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"server/config"
 	api "server/internal/api"
 	"server/internal/db"
 	"server/internal/middleware"
@@ -13,6 +14,7 @@ import (
 func main() {
 	e := echo.New()
 	db.InitializeDiceDB()
+	config.LoadConfig()
 	defer db.CloseDiceDB()
 
 	// echo middleware

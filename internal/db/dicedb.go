@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"log"
+	"server/config"
 
 	dice "github.com/dicedb/go-dice"
 )
@@ -12,7 +13,7 @@ var ctx = context.Background()
 
 func InitializeDiceDB() {
 	rdb = dice.NewClient(&dice.Options{
-		Addr:     "localhost:6379",
+		Addr:     config.AppConfig.DiceAddr,
 		Password: "",
 		DB:       0,
 	})
