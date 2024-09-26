@@ -7,5 +7,5 @@ import (
 )
 
 func cliHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{"message": "Search results"})
+	return c.JSON(http.StatusOK, map[string]string{"message": "cli handler"})
 }
