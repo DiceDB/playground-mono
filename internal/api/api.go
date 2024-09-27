@@ -31,7 +31,6 @@ func cliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmds, err :=  helpers.ParseHTTPRequest(r)
 	if err!=nil{
 		http.Error(w, "Error parsing HTTP request", http.StatusBadRequest)
-		return
 	}
 	resp := db.ExecuteCommand(diceCmds)
 	JSONResponse(w, r, http.StatusOK, resp)
