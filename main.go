@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"sync"
@@ -32,7 +33,7 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 	go func() {
 		defer wg.Done()
 		log.Printf("Starting server at %s\n", s.httpServer.Addr)
-		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}
 	}()
@@ -56,6 +57,6 @@ func main() {
 
 	// run the Http Server
 	if err := httpServer.Run(ctx); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		log.Printf("Server failed: %v\n", err)
 	}
 }
