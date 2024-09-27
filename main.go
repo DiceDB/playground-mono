@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"server/internal/api"
+	"server/internal/db"
 	"server/internal/middleware"
 )
 
@@ -43,6 +44,7 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 }
 
 func main() {
+	db.InitializeDice()
 	mux := http.NewServeMux()
 
 	mux.Handle("/", middleware.RateLimiter(http.HandlerFunc(api.HealthCheck)))
