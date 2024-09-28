@@ -6,6 +6,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -60,9 +61,13 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) interface{} {
 		if command.Args.Key == "" {
 			return errorResponse("key is required")
 		}
+
 		val, err := db.getKey(command.Args.Key)
-		if err != nil {
-			return errorResponse(fmt.Sprintf("error running get command: %v", err))
+		switch {
+		case errors.Is(err, dice.Nil):
+			return errorResponse("key does not exist")
+		case err != nil:
+			return errorResponse(fmt.Sprintf("Get failed %v", err))
 		}
 
 		return map[string]string{"value": val}
