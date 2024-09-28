@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"server/internal/api"
-	"server/internal/db"
 	"server/internal/middleware"
 
 	dice "github.com/dicedb/go-dice"
