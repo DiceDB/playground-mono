@@ -2,30 +2,26 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log/slog" // Import the slog package for structured logging
+	"log/slog"
 	"net/http"
+	"server/internal/db"
 	"strconv"
+	"strings"
 	"time"
 
-	dice "github.com/dicedb/go-dice" // Import dice package
+	dice "github.com/dicedb/go-dice"
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
-func RateLimiter(diceClient *dice.Client, next http.Handler, limit, window int) http.Handler {
+func RateLimiter(client *db.DiceDB, next http.Handler, limit, window int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Check DiceDB connection health
-		if err := diceClient.Ping(ctx).Err(); err != nil {
-			slog.Error("DiceDB connection is down", "error", err)
-			http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
-			return
-		}
-
 		// Skip rate limiting for non-command endpoints
-		if r.URL.Path != "/command" {
+		if !strings.Contains(r.URL.Path, "/cli/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -33,10 +29,11 @@ func RateLimiter(diceClient *dice.Client, next http.Handler, limit, window int) 
 		// Get the current time window as a unique key
 		currentWindow := time.Now().Unix() / int64(window)
 		key := fmt.Sprintf("request_count:%d", currentWindow)
+		slog.Info("Created rate limiter key", slog.Any("key", key))
 
 		// Fetch the current request count
-		val, err := diceClient.Get(ctx, key).Result()
-		if err != nil && err != dice.Nil {
+		val, err := client.Client.Get(ctx, key).Result()
+		if err != nil && !errors.Is(err, dice.Nil) {
 			slog.Error("Error fetching request count", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -61,7 +58,7 @@ func RateLimiter(diceClient *dice.Client, next http.Handler, limit, window int) 
 		}
 
 		// Increment the request count
-		if _, err := diceClient.Incr(ctx, key).Result(); err != nil {
+		if _, err := client.Client.Incr(ctx, key).Result(); err != nil {
 			slog.Error("Error incrementing request count", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -69,7 +66,7 @@ func RateLimiter(diceClient *dice.Client, next http.Handler, limit, window int) 
 
 		// Set the key expiry if it's newly created
 		if requestCount == 0 {
-			if err := diceClient.Expire(ctx, key, time.Duration(window)*time.Second).Err(); err != nil {
+			if err := client.Client.Expire(ctx, key, time.Duration(window)*time.Second).Err(); err != nil {
 				slog.Error("Error setting expiry for request count", "error", err)
 			}
 		}
