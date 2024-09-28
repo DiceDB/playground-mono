@@ -12,15 +12,15 @@ import (
 	"server/internal/api"
 	"server/internal/middleware"
 
-	redis "github.com/dicedb/go-dice"
+	dice "github.com/dicedb/go-dice"
 )
 
 type HTTPServer struct {
 	httpServer *http.Server
-	diceClient *redis.Client
+	diceClient *dice.Client
 }
 
-func NewHTTPServer(addr string, mux *http.ServeMux, client *redis.Client) *HTTPServer {
+func NewHTTPServer(addr string, mux *http.ServeMux, client *dice.Client) *HTTPServer {
 	return &HTTPServer{
 		httpServer: &http.Server{
 			Addr:              addr,
@@ -31,14 +31,14 @@ func NewHTTPServer(addr string, mux *http.ServeMux, client *redis.Client) *HTTPS
 	}
 }
 
-func initDiceClient(config *config.Config) (*redis.Client, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:        config.RedisAddr,
+func initDiceClient(configValue *config.Config) (*dice.Client, error) {
+	client := dice.NewClient(&dice.Options{
+		Addr:        configValue.DiceAddr,
 		DialTimeout: 10 * time.Second,
 		MaxRetries:  10,
 	})
 
-	// Ping the Redis server to verify the connection
+	// Ping the dice client to verify the connection
 	if err := client.Ping(context.Background()).Err(); err != nil {
 		return nil, err
 	}
@@ -66,21 +66,21 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 func (s *HTTPServer) Shutdown() error {
 	// Additional cleanup if necessary
 	if err := s.diceClient.Close(); err != nil {
-		log.Printf("Failed to close Redis client: %v", err)
+		log.Printf("Failed to close dice client: %v", err)
 	}
 	return s.httpServer.Shutdown(context.Background())
 }
 
 func main() {
-	config := config.LoadConfig()
-	diceClient, err := initDiceClient(config)
+	configValue := config.LoadConfig()
+	diceClient, err := initDiceClient(configValue)
 	if err != nil {
-		log.Fatalf("Failed to initialize Redis client: %v", err)
+		log.Fatalf("Failed to initialize dice client: %v", err)
 	}
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", middleware.RateLimiter(diceClient, http.HandlerFunc(api.HealthCheck), config.RequestLimit, config.RequestWindow))
+	mux.Handle("/", middleware.RateLimiter(diceClient, http.HandlerFunc(api.HealthCheck), configValue.RequestLimit, configValue.RequestWindow))
 	api.RegisterRoutes(mux)
 
 	httpServer := NewHTTPServer(":8080", mux, diceClient)

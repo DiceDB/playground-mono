@@ -8,18 +8,18 @@ import (
 	"strconv"
 	"time"
 
-	redis "github.com/dicedb/go-dice"
+	dice "github.com/dicedb/go-dice" // Import dice package
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
-func RateLimiter(diceClient *redis.Client, next http.Handler, limit int, window int) http.Handler {
+func RateLimiter(diceClient *dice.Client, next http.Handler, limit, window int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Check Redis connection health
+		// Check DiceDB connection health
 		if err := diceClient.Ping(ctx).Err(); err != nil {
-			slog.Error("Redis connection is down", "error", err)
+			slog.Error("DiceDB connection is down", "error", err)
 			http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 			return
 		}
@@ -36,7 +36,7 @@ func RateLimiter(diceClient *redis.Client, next http.Handler, limit int, window 
 
 		// Fetch the current request count
 		val, err := diceClient.Get(ctx, key).Result()
-		if err != nil && err != redis.Nil {
+		if err != nil && err != dice.Nil {
 			slog.Error("Error fetching request count", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
