@@ -16,7 +16,7 @@ type Config struct {
 // LoadConfig loads the application configuration from environment variables or defaults
 func LoadConfig() *Config {
 	return &Config{
-		DiceAddr:      getEnv("DICE_ADDR", "localhost:7379"), // Default Redis address
+		DiceAddr:      getEnv("DICE_ADDR", "localhost:7379"), // Default Dice address
 		ServerPort:    getEnv("SERVER_PORT", ":8080"),        // Default server port
 		RequestLimit:  getEnvInt("REQUEST_LIMIT", 1000),      // Default request limit
 		RequestWindow: getEnvInt("REQUEST_WINDOW", 60),       // Default request window in seconds
