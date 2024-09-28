@@ -1,16 +1,16 @@
 package db
 
-func getKey(key string) (string, error) {
-	val, err := rdb.Get(ctx, key).Result()
+func (db *DiceDB) getKey(key string) (string, error) {
+	val, err := db.Client.Get(db.Ctx, key).Result()
 	return val, err
 }
 
-func setKey(key, value string) error {
-	err := rdb.Set(ctx, key, value, 0).Err()
+func (db *DiceDB) setKey(key, value string) error {
+	err := db.Client.Set(db.Ctx, key, value, 0).Err()
 	return err
 }
 
-func deleteKeys(keys []string) error {
-	err := rdb.Del(ctx, keys...).Err()
+func (db *DiceDB) deleteKeys(keys []string) error {
+	err := db.Client.Del(db.Ctx, keys...).Err()
 	return err
 }

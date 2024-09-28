@@ -6,43 +6,72 @@ package db
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
+	"os"
+	"server/config"
 	"server/internal/cmds"
+	"time"
 
 	dice "github.com/dicedb/go-dice"
 )
 
-var rdb *dice.Client
-var ctx = context.Background()
+type DiceDB struct {
+	Client *dice.Client
+	Ctx    context.Context
+}
 
-func CloseDiceDB() {
-	err := rdb.Close()
+func (db *DiceDB) CloseDiceDB() {
+	err := db.Client.Close()
 	if err != nil {
-		log.Fatalf("error closing DiceDB connection: %v", err)
+		slog.Error("error closing DiceDB connection",
+			slog.Any("error", err))
+		os.Exit(1)
 	}
+}
+
+func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
+	diceClient := dice.NewClient(&dice.Options{
+		Addr:        configValue.DiceAddr,
+		DialTimeout: 10 * time.Second,
+		MaxRetries:  10,
+	})
+
+	// Ping the dice client to verify the connection
+	err := diceClient.Ping(context.Background()).Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return &DiceDB{
+		Client: diceClient,
+		Ctx:    context.Background(),
+	}, nil
 }
 
 func errorResponse(response string) map[string]string {
 	return map[string]string{"error": response}
 }
 
-func ExecuteCommand(command *cmds.CommandRequest) interface{} {
+// ExecuteCommand executes a command based on the input
+func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) interface{} {
 	switch command.Cmd {
 	case "get":
 		if command.Args.Key == "" {
 			return errorResponse("key is required")
 		}
-		val, err := getKey(command.Args.Key)
+		val, err := db.getKey(command.Args.Key)
 		if err != nil {
-			return errorResponse("error running get command")
+			return errorResponse(fmt.Sprintf("error running get command: %v", err))
 		}
+
 		return map[string]string{"value": val}
 
 	case "set":
 		if command.Args.Key == "" || command.Args.Value == "" {
 			return errorResponse("key and value are required")
 		}
-		err := setKey(command.Args.Key, command.Args.Value)
+		err := db.setKey(command.Args.Key, command.Args.Value)
 		if err != nil {
 			return errorResponse("failed to set key")
 		}
@@ -50,14 +79,15 @@ func ExecuteCommand(command *cmds.CommandRequest) interface{} {
 
 	case "del":
 		if len(command.Args.Keys) == 0 {
-			return map[string]string{"error": "atleast one key is required"}
+			return errorResponse("at least one key is required")
 		}
-		err := deleteKeys(command.Args.Keys)
+		err := db.deleteKeys(command.Args.Keys)
 		if err != nil {
-			return map[string]string{"error": "failed to delete keys"}
+			return errorResponse("failed to delete keys")
 		}
 
 		return map[string]string{"result": "OK"}
+
 	default:
 		return errorResponse("unknown command")
 	}
