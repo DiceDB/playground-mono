@@ -13,6 +13,7 @@ func JSONResponse(w http.ResponseWriter, r *http.Request, status int, data inter
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -30,6 +31,7 @@ func cliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmds, err :=  helpers.ParseHTTPRequest(r)
 	if err!=nil{
 		http.Error(w, "Error parsing HTTP request", http.StatusBadRequest)
+		return
 	}
 	resp := db.ExecuteCommand(diceCmds)
 	JSONResponse(w, r, http.StatusOK, resp)
