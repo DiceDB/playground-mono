@@ -1,6 +1,6 @@
 package db
 
-func getKey(key string) (string,error){
+func getKey(key string) (string, error) {
 	val, err := rdb.Get(ctx, key).Result()
 	return val, err
 }
@@ -10,8 +10,7 @@ func setKey(key, value string) error {
 	return err
 }
 
-func deleteKeys(keys []string) error{
+func deleteKeys(keys []string) error {
 	err := rdb.Del(ctx, keys...).Err()
 	return err
 }
-
