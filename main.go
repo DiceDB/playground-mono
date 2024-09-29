@@ -18,7 +18,7 @@ func main() {
 
 	// Create mux and register routes
 	mux := http.NewServeMux()
-	httpServer := server.NewHTTPServer(":8080", mux, diceClient)
+	httpServer := server.NewHTTPServer(":8080", mux, diceClient, configValue.RequestLimit, configValue.RequestWindow)
 	mux.HandleFunc("/health", httpServer.HealthCheck)
 	mux.HandleFunc("/cli/{cmd}", httpServer.CliHandler)
 	mux.HandleFunc("/search", httpServer.SearchHandler)

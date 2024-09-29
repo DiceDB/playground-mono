@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"server/internal/middleware"
 	"strings"
 	"sync"
 	"time"
@@ -21,24 +22,29 @@ type HTTPServer struct {
 // HandlerMux wraps ServeMux and forces REST paths to lowercase
 // and attaches a rate limiter with the handler
 type HandlerMux struct {
-	mux *http.ServeMux
+	mux         *http.ServeMux
+	rateLimiter func(http.ResponseWriter, *http.Request, http.Handler)
 }
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Convert the path to lowercase before passing to the underlying mux.
 	r.URL.Path = strings.ToLower(r.URL.Path)
-	cim.mux.ServeHTTP(w, r)
+	// Apply rate limiter
+	cim.rateLimiter(w, r, cim.mux)
 }
 
-func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB) *HTTPServer {
-	caseInsensitiveMux := &HandlerMux{
+func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit, window int) *HTTPServer {
+	handlerMux := &HandlerMux{
 		mux: mux,
+		rateLimiter: func(w http.ResponseWriter, r *http.Request, next http.Handler) {
+			middleware.RateLimiter(client, next, limit, window).ServeHTTP(w, r)
+		},
 	}
 
 	return &HTTPServer{
 		httpServer: &http.Server{
 			Addr:              addr,
-			Handler:           caseInsensitiveMux,
+			Handler:           handlerMux,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
 		DiceClient: client,
