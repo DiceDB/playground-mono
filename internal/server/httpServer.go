@@ -92,5 +92,14 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
+	q := request.URL.Query().Get("q")
+	if q == "" {
+		http.Error(w, "Missing query parameter 'q' ", http.StatusBadRequest)
+		return
+	}
+	if q == "*" {
+		q = ""
+	}
+	
 	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "Search results"})
 }
