@@ -5,8 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/http/httptest"
+	"server/config"
 	"server/internal/cmds"
+	"server/internal/db"
+	"server/internal/middleware"
 	"strings"
 )
 
@@ -160,4 +165,23 @@ func JSONResponse(w http.ResponseWriter, status int, data interface{}) {
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func MockHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
+
+func SetupRateLimiter(limit int, window float64) (*httptest.ResponseRecorder, *http.Request, http.Handler) {
+	configValue := config.LoadConfig()
+	client, err := db.InitDiceClient(configValue)
+	if err != nil {
+		log.Fatalf("Failed to initialize dice client: %v", err)
+	}
+
+	r := httptest.NewRequest("GET", "/cli/get", nil)
+	w := httptest.NewRecorder()
+
+	rateLimiter := middleware.RateLimiter(client, http.HandlerFunc(MockHandler), limit, window)
+	return w, r, rateLimiter
 }

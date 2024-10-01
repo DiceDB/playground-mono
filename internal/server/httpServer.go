@@ -47,7 +47,7 @@ func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cim.rateLimiter(w, r, cim.mux)
 }
 
-func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit, window int) *HTTPServer {
+func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit int, window float64) *HTTPServer {
 	handlerMux := &HandlerMux{
 		mux: mux,
 		rateLimiter: func(w http.ResponseWriter, r *http.Request, next http.Handler) {

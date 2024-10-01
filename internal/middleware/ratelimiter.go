@@ -14,27 +14,23 @@ import (
 	dice "github.com/dicedb/go-dice"
 )
 
-// TODO: Look at this later
-func enableCors(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-}
-
 // RateLimiter middleware to limit requests based on a specified limit and duration
-func RateLimiter(client *db.DiceDB, next http.Handler, limit, window int) http.Handler {
+func RateLimiter(client *db.DiceDB, next http.Handler, limit int, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		// Set CORS headers
-		enableCors(w)
+		// moving enable cors to the top thus we can do CORS checks before anything
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			enableCors(w, origin)
+		}
 
 		// Handle OPTIONS preflight request
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
 
 		// Skip rate limiting for non-command endpoints
 		if !strings.Contains(r.URL.Path, "/cli/") {
@@ -67,7 +63,7 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit, window int) http.H
 		}
 
 		// Check if the request count exceeds the limit
-		if requestCount >= limit {
+		if requestCount > limit {
 			slog.Warn("Request limit exceeded", "count", requestCount)
 			http.Error(w, "429 - Too Many Requests", http.StatusTooManyRequests)
 			return
