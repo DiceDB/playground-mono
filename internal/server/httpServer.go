@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"server/internal/middleware"
@@ -24,6 +26,18 @@ type HTTPServer struct {
 type HandlerMux struct {
 	mux         *http.ServeMux
 	rateLimiter func(http.ResponseWriter, *http.Request, http.Handler)
+}
+
+type HTTPResponse struct {
+	Data interface{} `json:"data"`
+}
+
+type HTTPErrorResponse struct {
+	Error interface{} `json:"error"`
+}
+
+func errorResponse(response string) string {
+	return fmt.Sprintf("{\"error\": \"%q\"}", response)
 }
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -81,14 +95,37 @@ func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
 }
 
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
-	diceCmds, err := util.ParseHTTPRequest(r)
+	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
 		http.Error(w, "Error parsing HTTP request", http.StatusBadRequest)
 		return
 	}
 
-	resp := s.DiceClient.ExecuteCommand(diceCmds)
-	util.JSONResponse(w, http.StatusOK, resp)
+	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
+	if err != nil {
+		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	if _, ok := resp.(string); !ok {
+		log.Println("Error marshaling response", "error", err)
+		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
+		return
+	}
+
+	httpResponse := HTTPResponse{Data: resp.(string)}
+	responseJSON, err := json.Marshal(httpResponse)
+	if err != nil {
+		log.Println("Error marshaling response", "error", err)
+		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(responseJSON)
+	if err != nil {
+		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {

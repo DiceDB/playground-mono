@@ -14,11 +14,27 @@ import (
 	dice "github.com/dicedb/go-dice"
 )
 
+// TODO: Look at this later
+func enableCors(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+}
+
 // RateLimiter middleware to limit requests based on a specified limit and duration
 func RateLimiter(client *db.DiceDB, next http.Handler, limit, window int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+
+		// Set CORS headers
+		enableCors(w)
+
+		// Handle OPTIONS preflight request
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		// Skip rate limiting for non-command endpoints
 		if !strings.Contains(r.URL.Path, "/cli/") {

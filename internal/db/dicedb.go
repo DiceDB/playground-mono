@@ -17,6 +17,10 @@ import (
 	dice "github.com/dicedb/go-dice"
 )
 
+const (
+	RespOK = "OK"
+)
+
 type DiceDB struct {
 	Client *dice.Client
 	Ctx    context.Context
@@ -50,50 +54,49 @@ func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
 	}, nil
 }
 
-func errorResponse(response string) map[string]string {
-	return map[string]string{"error": response}
-}
-
 // ExecuteCommand executes a command based on the input
-func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) interface{} {
+func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, error) {
 	switch command.Cmd {
-	case "get":
-		if command.Args.Key == "" {
-			return errorResponse("key is required")
+	case "GET":
+		if len(command.Args) != 1 {
+			return nil, errors.New("invalid args")
 		}
 
-		val, err := db.getKey(command.Args.Key)
+		val, err := db.getKey(command.Args[0])
 		switch {
 		case errors.Is(err, dice.Nil):
-			return errorResponse("key does not exist")
+			return nil, errors.New("key does not exist")
 		case err != nil:
-			return errorResponse(fmt.Sprintf("Get failed %v", err))
+			return nil, fmt.Errorf("get failed %v", err)
 		}
 
-		return map[string]string{"value": val}
+		return val, nil
 
-	case "set":
-		if command.Args.Key == "" || command.Args.Value == "" {
-			return errorResponse("key and value are required")
+	case "SET":
+		if len(command.Args) < 2 {
+			return nil, errors.New("key is required")
 		}
-		err := db.setKey(command.Args.Key, command.Args.Value)
+
+		err := db.setKey(command.Args[0], command.Args[1])
 		if err != nil {
-			return errorResponse("failed to set key")
+			return nil, errors.New("failed to set key")
 		}
-		return map[string]string{"result": "OK"}
 
-	case "del":
-		if len(command.Args.Keys) == 0 {
-			return errorResponse("at least one key is required")
+		return RespOK, nil
+
+	case "DEL":
+		if len(command.Args) == 0 {
+			return nil, errors.New("at least one key is required")
 		}
-		err := db.deleteKeys(command.Args.Keys)
+
+		err := db.deleteKeys(command.Args)
 		if err != nil {
-			return errorResponse("failed to delete keys")
+			return nil, errors.New("failed to delete keys")
 		}
 
-		return map[string]string{"result": "OK"}
+		return RespOK, nil
 
 	default:
-		return errorResponse("unknown command")
+		return nil, errors.New("unknown command")
 	}
 }
