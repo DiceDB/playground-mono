@@ -13,7 +13,7 @@ type Config struct {
 	RequestWindow int // Field for the time window in seconds
 }
 
-// LoadConfig loads the application configuration from environment variables or defaults
+// Load loads the application configuration from environment variables or defaults
 func Load() *Config {
 	return &Config{
 		DiceAddr:      getEnv("DICE_ADDR", "localhost:7379"), // Default Dice address
