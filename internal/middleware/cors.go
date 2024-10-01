@@ -10,7 +10,7 @@ func enableCors(w http.ResponseWriter, origin string) {
 	var allAllowedOrigins []string = configValue.AllowedOrigins
 	allowed := false
 	for _, allowedOrigin := range allAllowedOrigins {
-		if origin == allowedOrigin {
+		if origin == allowedOrigin || allowedOrigin == "*" {
 			allowed = true
 			break
 		}
