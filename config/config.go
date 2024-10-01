@@ -20,9 +20,6 @@ type Config struct {
 
 // LoadConfig loads the application configuration from environment variables or defaults
 func LoadConfig() *Config {
-
-	// go does not automatically load .env file
-	// thats why added a package as a dependency
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Warning: .env file not found, falling back to system environment variables.")
@@ -67,8 +64,7 @@ func getEnvFloat64(key string, fallback float64) float64 {
 
 func getEnvArray(key string, fallback []string) []string {
 	if value, exists := os.LookupEnv(key); exists {
-		fmt.Println("value", value)
-		if arrayValue, err := splitString(value); err == nil {
+		if arrayValue := splitString(value); len(arrayValue) > 0 {
 			return arrayValue
 		}
 	}
@@ -76,10 +72,10 @@ func getEnvArray(key string, fallback []string) []string {
 }
 
 // splitString splits a string by comma and returns a slice of strings
-func splitString(s string) ([]string, error) {
+func splitString(s string) []string {
 	var array []string
 	for _, v := range strings.Split(s, ",") {
 		array = append(array, strings.TrimSpace(v))
 	}
-	return array, nil
+	return array
 }

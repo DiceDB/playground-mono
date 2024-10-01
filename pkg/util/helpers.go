@@ -169,7 +169,9 @@ func JSONResponse(w http.ResponseWriter, status int, data interface{}) {
 
 func MockHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	if _, err := w.Write([]byte("OK")); err != nil {
+		log.Fatalf("Failed to write response: %v", err)
+	}
 }
 
 func SetupRateLimiter(limit int, window float64) (*httptest.ResponseRecorder, *http.Request, http.Handler) {
@@ -179,7 +181,7 @@ func SetupRateLimiter(limit int, window float64) (*httptest.ResponseRecorder, *h
 		log.Fatalf("Failed to initialize dice client: %v", err)
 	}
 
-	r := httptest.NewRequest("GET", "/cli/get", nil)
+	r := httptest.NewRequest("GET", "/cli/get", http.NoBody)
 	w := httptest.NewRecorder()
 
 	rateLimiter := middleware.RateLimiter(client, http.HandlerFunc(MockHandler), limit, window)

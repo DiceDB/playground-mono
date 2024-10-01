@@ -7,7 +7,7 @@ import (
 
 func enableCors(w http.ResponseWriter, origin string) {
 	configValue := config.LoadConfig()
-	var allAllowedOrigins []string = configValue.AllowedOrigins
+	allAllowedOrigins := configValue.AllowedOrigins
 	allowed := false
 	for _, allowedOrigin := range allAllowedOrigins {
 		if origin == allowedOrigin || allowedOrigin == "*" {
