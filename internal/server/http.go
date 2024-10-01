@@ -11,12 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"server/config"
-	"server/internal/handlers"
-	"server/internal/middleware"
-	"server/internal/repository"
-	"server/internal/service"
-
+	"github.com/DiceDB/playground-mono/config"
+	"github.com/DiceDB/playground-mono/internal/handlers"
+	"github.com/DiceDB/playground-mono/internal/middleware"
+	"github.com/DiceDB/playground-mono/internal/repository"
+	"github.com/DiceDB/playground-mono/internal/service"
 	dice "github.com/dicedb/go-dice"
 )
 

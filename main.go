@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
-	"server/config"
-	"server/internal/server"
+
+	"github.com/DiceDB/playground-mono/config"
+	"github.com/DiceDB/playground-mono/internal/server"
 )
 
 func main() {

@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	"server/internal/repository"
+
+	"github.com/DiceDB/playground-mono/internal/repository"
 )
 
 // Service is service layer client interface that should have all the methods

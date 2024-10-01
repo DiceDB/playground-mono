@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 	"errors"
-	"server/internal/repository"
+
+	"github.com/DiceDB/playground-mono/internal/repository"
 )
 
 func (s *service) Get(ctx context.Context, req *GetRequest) (*GetResponse, error) {

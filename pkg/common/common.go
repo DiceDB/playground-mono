@@ -1,4 +1,4 @@
-package helpers
+package common
 
 import (
 	"encoding/json"
@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"server/internal/cmds"
 	"strings"
+
+	"github.com/DiceDB/playground-mono/internal/cmds"
 )
 
 const (
