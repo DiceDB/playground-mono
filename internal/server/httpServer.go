@@ -37,7 +37,7 @@ type HTTPErrorResponse struct {
 }
 
 func errorResponse(response string) string {
-	return fmt.Sprintf("{\"error\": \"%q\"}", response)
+	return fmt.Sprintf("{\"error\": %q}", response)
 }
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
