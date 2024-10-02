@@ -44,7 +44,9 @@ func (db *InMemoryDiceDB) Incr(ctx context.Context, key string) (int64, error) {
 	val, exists := db.data[key]
 	var count int64
 	if exists {
-		fmt.Sscanf(val, "%d", &count)
+		if _, err := fmt.Sscanf(val, "%d", &count); err != nil {
+			return 0, fmt.Errorf("error parsing value for key %s: %w", key, err)
+		}
 	}
 
 	count++
