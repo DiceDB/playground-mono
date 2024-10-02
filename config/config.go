@@ -13,7 +13,7 @@ import (
 type Config struct {
 	DiceAddr       string
 	ServerPort     string
-	RequestLimit   int      // Field for the request limit
+	RequestLimit   int64    // Field for the request limit
 	RequestWindow  float64  // Field for the time window in float64
 	AllowedOrigins []string // Field for the allowed origins
 }
@@ -43,13 +43,13 @@ func getEnv(key, fallback string) string {
 }
 
 // getEnvInt retrieves an environment variable as an integer or returns a default value
-func getEnvInt(key string, fallback int) int {
+func getEnvInt(key string, fallback int) int64 {
 	if value, exists := os.LookupEnv(key); exists {
 		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
+			return int64(intValue)
 		}
 	}
-	return fallback
+	return int64(fallback)
 }
 
 // added for miliseconds request window controls

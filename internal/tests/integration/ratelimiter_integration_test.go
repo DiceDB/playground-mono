@@ -17,7 +17,7 @@ func TestRateLimiterWithinLimit(t *testing.T) {
 
 	w, r, rateLimiter := util.SetupRateLimiter(limit, window)
 
-	for i := 0; i < limit; i++ {
+	for i := int64(0); i < limit; i++ {
 		rateLimiter.ServeHTTP(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 	}
@@ -30,7 +30,7 @@ func TestRateLimiterExceedsLimit(t *testing.T) {
 
 	w, r, rateLimiter := util.SetupRateLimiter(limit, window)
 
-	for i := 0; i < limit; i++ {
+	for i := int64(0); i < limit; i++ {
 		rateLimiter.ServeHTTP(w, r)
 		require.Equal(t, http.StatusOK, w.Code)
 	}

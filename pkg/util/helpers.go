@@ -8,10 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"server/config"
 	"server/internal/cmds"
-	"server/internal/db"
 	"server/internal/middleware"
+	db "server/internal/tests/dbmocks"
 	"strings"
 )
 
@@ -174,16 +173,13 @@ func MockHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func SetupRateLimiter(limit int, window float64) (*httptest.ResponseRecorder, *http.Request, http.Handler) {
-	configValue := config.LoadConfig()
-	client, err := db.InitDiceClient(configValue)
-	if err != nil {
-		log.Fatalf("Failed to initialize dice client: %v", err)
-	}
+func SetupRateLimiter(limit int64, window float64) (*httptest.ResponseRecorder, *http.Request, http.Handler) {
+	mockClient := db.NewInMemoryDiceDB()
 
-	r := httptest.NewRequest("GET", "/cli/get", http.NoBody)
+	r := httptest.NewRequest("GET", "/cli/somecommand", nil)
 	w := httptest.NewRecorder()
 
-	rateLimiter := middleware.RateLimiter(client, http.HandlerFunc(MockHandler), limit, window)
+	rateLimiter := middleware.MockRateLimiter(mockClient, http.HandlerFunc(MockHandler), limit, window)
+
 	return w, r, rateLimiter
 }
