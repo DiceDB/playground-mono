@@ -1,8 +1,9 @@
+//modified http
+
 package server
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -25,24 +26,6 @@ type HandlerMux struct {
 	rateLimiter func(http.ResponseWriter, *http.Request, http.Handler)
 }
 
-type HTTPResponse struct {
-	Data interface{} `json:"data"`
-}
-
-type HTTPErrorResponse struct {
-	Error interface{} `json:"error"`
-}
-
-func errorResponse(response string) string {
-	errorMessage := map[string]string{"error": response}
-	jsonResponse, err := json.Marshal(errorMessage)
-	if err != nil {
-		slog.Error("Error marshaling response: %v", slog.Any("err", err))
-		return `{"error": "internal server error"}`
-	}
-
-	return string(jsonResponse)
-}
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	middleware.TrailingSlashMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -95,43 +78,23 @@ func (s *HTTPServer) Shutdown() error {
 }
 
 func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
-	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "server is running"})
+	util.HttpResponseJSON(w, http.StatusOK, map[string]string{"message": "Server is running"})
 }
 
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
-		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
+		util.HttpResponseException(w,http.StatusBadRequest,err)
 		return
 	}
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
 		slog.Error("error: failure in executing command", "error", slog.Any("err", err))
-		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
+		util.HttpResponseException(w,http.StatusBadRequest,err)
 		return
 	}
-
-	respStr, ok := resp.(string)
-	if !ok {
-		slog.Error("error: response is not a string", "error", slog.Any("err", err))
-		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
-		return
-	}
-
-	httpResponse := HTTPResponse{Data: respStr}
-	responseJSON, err := json.Marshal(httpResponse)
-	if err != nil {
-		slog.Error("error marshaling response to json", "error", slog.Any("err", err))
-		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
-		return
-	}
-
-	_, err = w.Write(responseJSON)
-	if err != nil {
-		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
-		return
-	}
+	util.HttpResponseJSON(w, http.StatusOK, resp)
 }
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
