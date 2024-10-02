@@ -4,6 +4,8 @@ go 1.23
 
 toolchain go1.23.0
 
+require github.com/dicedb/go-dice v0.0.0-20240820180649-d97f15fca831
+
 require (
 	github.com/dicedb/dicedb-go v0.0.0-20241015181607-d31c1df12107
 	github.com/joho/godotenv v1.5.1
