@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"server/internal/middleware"
@@ -100,21 +102,16 @@ func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request)
 	if q == "*" {
 		q = ""
 	}
-	commands := map[string]map[string]string {
-		
-			"SET": {
-			  "title": "<b>SET</b>",
-			  "syntax": "SET key value [NX | XX] [EX seconds | PX milliseconds | EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL ]",
-			  "body": "The SET command in DiceDB is used to set the value of a key. If the key already holds a value, it is overwritten, regardless of its type. This is one of the most fundamental operations in DiceDB as it allows for both creating and updating key-value pairs.",
-			  "url": "https://dicedb-docs.netlify.app/commands/set/",
-			},
-			"GET": {
-			  "title": "<b>GET</b>",
-			  "syntax": "GET key",
-			  "body": "The GET command retrieves the value of a key. If the key does not exist, nil is returned.",
-			  "url": "https://dicedb-docs.netlify.app/commands/get/",
-			},	  
-	}
+	data, err := ioutil.ReadFile("https://github.com/DiceDB/playground-web/blob/master/src/data/command.ts")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    var commands map[string]map[string]string
+    err = json.Unmarshal(data, &commands)
+    if err != nil {
+        log.Fatal(err)
+    }
 	matchingCommands := []map[string]string{}
 	for _, command := range commands {
 		
