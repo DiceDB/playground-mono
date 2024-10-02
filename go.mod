@@ -2,6 +2,8 @@ module server
 
 go 1.22.5
 
+require github.com/dicedb/go-dice v0.0.0-20240820180649-d97f15fca831
+
 require (
 	github.com/dicedb/go-dice v0.0.0-20240820180649-d97f15fca831
 	github.com/joho/godotenv v1.5.1
