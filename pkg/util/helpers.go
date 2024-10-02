@@ -31,13 +31,29 @@ const (
 	JSONIngest string = "JSON.INGEST"
 )
 
+type BlacklistedCommandError struct {
+	Command string
+}
+
+var blacklistedCommands = map[string]bool{
+	"FLUSHALL": true, "FLUSHDB": true, "DUMP": true, "ABORT": true,
+	"AUTH": true, "CONFIG": true, "SAVE": true, "BGSAVE": true,
+	"BGREWRITEAOF": true, "RESTORE": true, "MULTI": true, "EXEC": true,
+	"DISCARD": true, "QWATCH": true, "QUNWATCH": true, "LATENCY": true,
+	"CLIENT": true, "SLEEP": true, "PERSIST": true,
+}
+
 func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 	command := strings.TrimPrefix(r.URL.Path, "/cli/")
 	if command == "" {
 		return nil, errors.New("invalid command")
 	}
-
 	command = strings.ToUpper(command)
+
+	if blacklistedCommands[command] {
+		return nil, &BlacklistedCommandError{Command: command}
+	}
+
 	var args []string
 
 	// Extract query parameters
@@ -152,6 +168,15 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 		Cmd:  command,
 		Args: args,
 	}, nil
+}
+
+func (e *BlacklistedCommandError) Error() string {
+	return fmt.Sprintf("ERR unknown command '%s'", e.Command)
+}
+
+func IsBlacklistedCommand(err error) bool {
+	_, ok := err.(*BlacklistedCommandError)
+	return ok
 }
 
 func JSONResponse(w http.ResponseWriter, status int, data interface{}) {

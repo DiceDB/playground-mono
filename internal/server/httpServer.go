@@ -97,6 +97,10 @@ func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
+		if util.IsBlacklistedCommand(err) {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
 		http.Error(w, "Error parsing HTTP request", http.StatusBadRequest)
 		return
 	}
