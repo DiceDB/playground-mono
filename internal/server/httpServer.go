@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"server/internal/middleware"
 	"strings"
 	"sync"
@@ -102,11 +103,15 @@ func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request)
 	if q == "*" {
 		q = ""
 	}
-	data, err := ioutil.ReadFile("https://github.com/DiceDB/playground-web/blob/master/src/data/command.ts")
+	f, err := os.Open("https://github.com/DiceDB/playground-web/blob/master/src/data/command.ts")
     if err != nil {
         log.Fatal(err)
     }
-
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+        log.Fatal(err)
+    }
     var commands map[string]map[string]string
     err = json.Unmarshal(data, &commands)
     if err != nil {
