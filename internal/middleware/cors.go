@@ -11,7 +11,7 @@ func enableCors(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	allowed := false
 	for _, allowedOrigin := range allAllowedOrigins {
-		if origin == allowedOrigin || allowedOrigin == "*" {
+		if origin == allowedOrigin || allowedOrigin == "*" || origin == "" {
 			allowed = true
 			break
 		}
@@ -29,7 +29,7 @@ func enableCors(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", origin)
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, Content-Length")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE, PATCH")

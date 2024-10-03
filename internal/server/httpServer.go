@@ -97,26 +97,27 @@ func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
-		http.Error(w, "Error parsing HTTP request", http.StatusBadRequest)
+		http.Error(w, errorResponse("Error parsing HTTP request"), http.StatusBadRequest)
 		return
 	}
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
-		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
+		http.Error(w, errorResponse("Error executing command"), http.StatusBadRequest)
 		return
 	}
 
-	if _, ok := resp.(string); !ok {
-		log.Println("Error marshaling response", "error", err)
+	respStr, ok := resp.(string)
+	if !ok {
+		log.Println("Error: response is not a string", "error", err)
 		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
 		return
 	}
 
-	httpResponse := HTTPResponse{Data: resp.(string)}
+	httpResponse := HTTPResponse{Data: respStr}
 	responseJSON, err := json.Marshal(httpResponse)
 	if err != nil {
-		log.Println("Error marshaling response", "error", err)
+		log.Println("Error marshaling response to JSON", "error", err)
 		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
 		return
 	}
