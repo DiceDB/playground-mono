@@ -5,13 +5,13 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"server/internal/constants"
+	"server/internal/db"
 	"server/internal/middleware"
+	util "server/pkg/util"
 	"strings"
 	"sync"
 	"time"
-
-	"server/internal/db"
-	util "server/pkg/util"
 )
 
 type HTTPServer struct {
@@ -87,10 +87,25 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check for blacklisted commands
+	if containsBlacklistedCommand(strings.ToUpper(diceCmds.Cmd)) {
+		http.Error(w, "Error: One or more commands are not allowed", http.StatusForbidden)
+		return
+	}
+
 	resp := s.DiceClient.ExecuteCommand(diceCmds)
 	util.JSONResponse(w, http.StatusOK, resp)
 }
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
 	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "Search results"})
+}
+
+func containsBlacklistedCommand(Cmds string) bool {
+	for _, blackListedCmd := range constants.BlacklistedCommands {
+		if Cmds == blackListedCmd {
+			return true
+		}
+	}
+	return false
 }
