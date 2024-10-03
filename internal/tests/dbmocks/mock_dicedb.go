@@ -7,18 +7,18 @@ import (
 	"time"
 )
 
-type InMemoryDiceDB struct {
+type DiceDBMock struct {
 	data  map[string]string
 	mutex sync.Mutex
 }
 
-func NewInMemoryDiceDB() *InMemoryDiceDB {
-	return &InMemoryDiceDB{
+func NewDiceDBMock() *DiceDBMock {
+	return &DiceDBMock{
 		data: make(map[string]string),
 	}
 }
 
-func (db *InMemoryDiceDB) Get(ctx context.Context, key string) (string, error) {
+func (db *DiceDBMock) Get(ctx context.Context, key string) (string, error) {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
@@ -29,7 +29,7 @@ func (db *InMemoryDiceDB) Get(ctx context.Context, key string) (string, error) {
 	return val, nil
 }
 
-func (db *InMemoryDiceDB) Set(ctx context.Context, key, value string, expiration time.Duration) error {
+func (db *DiceDBMock) Set(ctx context.Context, key, value string, expiration time.Duration) error {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
@@ -37,7 +37,7 @@ func (db *InMemoryDiceDB) Set(ctx context.Context, key, value string, expiration
 	return nil
 }
 
-func (db *InMemoryDiceDB) Incr(ctx context.Context, key string) (int64, error) {
+func (db *DiceDBMock) Incr(ctx context.Context, key string) (int64, error) {
 	db.mutex.Lock()
 	defer db.mutex.Unlock()
 
@@ -54,6 +54,6 @@ func (db *InMemoryDiceDB) Incr(ctx context.Context, key string) (int64, error) {
 	return count, nil
 }
 
-func (db *InMemoryDiceDB) Expire(ctx context.Context, key string, expiration time.Duration) error {
+func (db *DiceDBMock) Expire(ctx context.Context, key string, expiration time.Duration) error {
 	return nil
 }

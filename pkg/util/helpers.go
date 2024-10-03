@@ -174,7 +174,7 @@ func MockHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetupRateLimiter(limit int64, window float64) (*httptest.ResponseRecorder, *http.Request, http.Handler) {
-	mockClient := db.NewInMemoryDiceDB()
+	mockClient := db.NewDiceDBMock()
 
 	r := httptest.NewRequest("GET", "/cli/somecommand", http.NoBody)
 	w := httptest.NewRecorder()

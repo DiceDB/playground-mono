@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"server/internal/db"
-	mock "server/internal/tests/dbmocks" // Import the mock DB for testing
+	mock "server/internal/tests/dbmocks"
 	"strconv"
 	"strings"
 	"time"
@@ -85,7 +85,7 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 	})
 }
 
-func MockRateLimiter(client *mock.InMemoryDiceDB, next http.Handler, limit int64, window float64) http.Handler {
+func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Handle CORS for requests
 		origin := r.Header.Get("Origin")
