@@ -21,15 +21,8 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 		// moving enable cors to the top thus we can do CORS checks before anything
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			enableCors(w, origin)
+			enableCors(w, r)
 		}
-
-		// Handle OPTIONS preflight request
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -97,15 +90,8 @@ func MockRateLimiter(client *mock.InMemoryDiceDB, next http.Handler, limit int64
 		// Handle CORS for requests
 		origin := r.Header.Get("Origin")
 		if origin != "" {
-			enableCors(w, origin)
+			enableCors(w, r)
 		}
-
-		// Handle OPTIONS preflight requests
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
 		// Set a request context with a timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
