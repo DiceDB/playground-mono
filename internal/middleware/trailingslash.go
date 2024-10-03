@@ -5,19 +5,19 @@ import (
 	"strings"
 )
 
-// TrailingSlashMiddleware is a middleware function that removes the trailing slash from the URL path.
 func TrailingSlashMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if the URL path ends with a slash and is not the root path ("/")
 		if r.URL.Path != "/" && strings.HasSuffix(r.URL.Path, "/") {
-			// Remove the trailing slash
-			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
-			// Redirect to the new path (optional, for SEO)
-			http.Redirect(w, r, r.URL.Path, http.StatusMovedPermanently)
+			// remove slash
+			newPath := strings.TrimSuffix(r.URL.Path, "/")
+			// if query params exist append them
+			newURL := newPath
+			if r.URL.RawQuery != "" {
+				newURL += "?" + r.URL.RawQuery
+			}
+			http.Redirect(w, r, newURL, http.StatusMovedPermanently)
 			return
 		}
-
-		// Call the next handler
 		next.ServeHTTP(w, r)
 	})
 }
