@@ -7,14 +7,6 @@ import (
 	"testing"
 )
 
-// demo test case
-// {
-// 	name: string
-// requestURL: string,
-// expectedCode: int,
-// expectedLocation
-// }
-
 func TestTrailingSlashMiddleware(t *testing.T) {
 
 	handler := middleware.TrailingSlashMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
