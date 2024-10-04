@@ -3,6 +3,11 @@ services:
     image: dicedb/dicedb:latest
     ports:
       - "7379"
+    healthcheck:
+     test: ["CMD", "PING"]
+     interval: 10s
+     timeout: 3s
+     retries: 3
     networks:
      - dice-network
 
@@ -14,9 +19,9 @@ services:
     depends_on:
       - dicedb
     environment:
-      - DICE_ADDR=dicedb:7379
-      - DICE_USERNAME=${DICE_USERNAME}
-      - DICE_PASSWORD=${DICE_PASSWORD}
+      - DICEDB_ADDR=dicedb:7379
+      - DICEDB_USERNAME=${DICE_USERNAME}
+      - DICEDB_PASSWORD=${DICE_PASSWORD}
     networks:
      - dice-network
     
