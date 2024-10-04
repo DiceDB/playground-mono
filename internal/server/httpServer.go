@@ -42,9 +42,11 @@ func errorResponse(response string) string {
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Convert the path to lowercase before passing to the underlying mux.
-	r.URL.Path = strings.ToLower(r.URL.Path)
-	// Apply rate limiter
-	cim.rateLimiter(w, r, cim.mux)
+	middleware.TrailingSlashMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = strings.ToLower(r.URL.Path)
+		// Apply rate limiter
+		cim.rateLimiter(w, r, cim.mux)
+	})).ServeHTTP(w, r)
 }
 
 func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit int64, window float64) *HTTPServer {
