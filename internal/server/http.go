@@ -4,8 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"server/internal/middleware"
 	"strings"
@@ -13,7 +12,7 @@ import (
 	"time"
 
 	"server/internal/db"
-	util "server/pkg/util"
+	util "server/util"
 )
 
 type HTTPServer struct {
@@ -37,7 +36,13 @@ type HTTPErrorResponse struct {
 }
 
 func errorResponse(response string) string {
-	return fmt.Sprintf("{\"error\": %q}", response)
+	errorMessage := map[string]string{"error": response}
+	jsonResponse, err := json.Marshal(errorMessage)
+	if err != nil {
+		slog.Error("Error marshaling response: %v", slog.Any("err", err))
+		return `{"error": "internal server error"}`
+	}
+	return string(jsonResponse)
 }
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -73,64 +78,64 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		log.Printf("Starting server at %s\n", s.httpServer.Addr)
+		slog.Info("starting server at", slog.String("addr", s.httpServer.Addr))
 		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP server error: %v", err)
+			slog.Error("http server error: %v", slog.Any("err", err))
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("Shutting down server...")
+	slog.Info("shutting down server...")
 	return s.Shutdown()
 }
 
 func (s *HTTPServer) Shutdown() error {
 	if err := s.DiceClient.Client.Close(); err != nil {
-		log.Printf("Failed to close dice client: %v", err)
+		slog.Error("failed to close dicedb client: %v", slog.Any("err", err))
 	}
 
 	return s.httpServer.Shutdown(context.Background())
 }
 
 func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
-	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "Server is running"})
+	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "server is running"})
 }
 
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
-		http.Error(w, errorResponse("Error parsing HTTP request"), http.StatusBadRequest)
+		http.Error(w, errorResponse("error parsing http request"), http.StatusBadRequest)
 		return
 	}
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
-		http.Error(w, errorResponse("Error executing command"), http.StatusBadRequest)
+		http.Error(w, errorResponse("error executing command"), http.StatusBadRequest)
 		return
 	}
 
 	respStr, ok := resp.(string)
 	if !ok {
-		log.Println("Error: response is not a string", "error", err)
-		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
+		slog.Error("error: response is not a string", "error", slog.Any("err", err))
+		http.Error(w, errorResponse("internal Server Error"), http.StatusInternalServerError)
 		return
 	}
 
 	httpResponse := HTTPResponse{Data: respStr}
 	responseJSON, err := json.Marshal(httpResponse)
 	if err != nil {
-		log.Println("Error marshaling response to JSON", "error", err)
-		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
+		slog.Error("error marshaling response to json", "error", slog.Any("err", err))
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
 		return
 	}
 
 	_, err = w.Write(responseJSON)
 	if err != nil {
-		http.Error(w, errorResponse("Internal Server Error"), http.StatusInternalServerError)
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
 		return
 	}
 }
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
-	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "Search results"})
+	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "search results"})
 }
