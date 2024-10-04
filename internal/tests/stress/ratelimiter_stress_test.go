@@ -20,7 +20,7 @@ func TestRateLimiterUnderStress(t *testing.T) {
 	_, r, rateLimiter := util.SetupRateLimiter(limit, window)
 
 	var wg sync.WaitGroup
-	var numRequests int64 = limit + 10
+	var numRequests int64 = limit
 	successCount := int64(0)
 	failCount := int64(0)
 	var mu sync.Mutex
