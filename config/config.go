@@ -26,11 +26,11 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		DiceAddr:       getEnv("DICE_ADDR", "localhost:7379"),                                  // Default Dice address
-		ServerPort:     getEnv("SERVER_PORT", ":8080"),                                         // Default server port
-		RequestLimit:   getEnvInt("REQUEST_LIMIT", 1000),                                       // Default request limit
-		RequestWindow:  getEnvFloat64("REQUEST_WINDOW", 60),                                    // Default request window in float64
-		AllowedOrigins: getEnvArray("ALLOWED_ORIGINS", []string{"*", "http://localhost:8080"}), // Default allowed origins
+		DiceAddr:       getEnv("DICE_ADDR", "localhost:7379"),                             // Default Dice address
+		ServerPort:     getEnv("SERVER_PORT", ":8080"),                                    // Default server port
+		RequestLimit:   getEnvInt("REQUEST_LIMIT", 1000),                                  // Default request limit
+		RequestWindow:  getEnvFloat64("REQUEST_WINDOW", 60),                               // Default request window in float64
+		AllowedOrigins: getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:8080"}), // Default allowed origins
 	}
 }
 
