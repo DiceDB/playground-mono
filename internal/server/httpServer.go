@@ -33,7 +33,6 @@ func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Apply rate limiter
 		cim.rateLimiter(w, r, cim.mux)
 	})).ServeHTTP(w, r)
-
 }
 
 func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit, window int) *HTTPServer {
