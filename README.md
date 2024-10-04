@@ -28,8 +28,14 @@ $ curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/ins
 ```
 
 Steps to clone and run:
-```
+```sh
 $ git clone https://github.com/dicedb/playground-mono
 $ cd playground-mono
 $ go run main.go
+```
+
+### Using Docker
+
+```sh
+docker compose up -d
 ```
