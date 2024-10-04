@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"server/internal/middleware"
 	"strings"
 	"sync"
 	"time"
 
+	"server/internal/middleware"
 	"server/internal/db"
 	util "server/pkg/util"
 )
@@ -98,6 +98,13 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
 		http.Error(w, "Error parsing HTTP request", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the command is blacklisted
+	if err := util.IsBlacklistedCommand(diceCmd.Cmd); err != nil {
+		// Return the error message in the specified format
+		http.Error(w, errorResponse(fmt.Sprintf("ERR unknown command '%s'", diceCmd.Cmd)), http.StatusForbidden)
 		return
 	}
 
