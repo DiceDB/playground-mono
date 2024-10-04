@@ -1,0 +1,26 @@
+services:
+  dicedb:
+    image: dicedb/dicedb:latest
+    ports:
+      - "7379"
+    networks:
+     - dice-network
+
+  backend:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - dicedb
+    environment:
+      - DICE_ADDR=dicedb:7379
+      - DICE_USERNAME=${DICE_USERNAME}
+      - DICE_PASSWORD=${DICE_PASSWORD}
+    networks:
+     - dice-network
+    
+networks:
+ dice-network:
+  driver: bridge
+
