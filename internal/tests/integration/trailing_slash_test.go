@@ -45,19 +45,19 @@ func TestTrailingSlashMiddleware(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", tt.requestURL, nil)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", test.requestURL, nil)
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, req)
 
-			if w.Code != tt.expectedCode {
-				t.Errorf("expected status %d, got %d", tt.expectedCode, w.Code)
+			if w.Code != test.expectedCode {
+				t.Errorf("expected status %d, got %d", test.expectedCode, w.Code)
 			}
 
-			if tt.expectedUrl != "" && w.Header().Get("Location") != tt.expectedUrl {
-				t.Errorf("expected location %s, got %s", tt.expectedUrl, w.Header().Get("Location"))
+			if test.expectedUrl != "" && w.Header().Get("Location") != test.expectedUrl {
+				t.Errorf("expected location %s, got %s", test.expectedUrl, w.Header().Get("Location"))
 			}
 		})
 	}

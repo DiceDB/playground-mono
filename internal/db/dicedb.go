@@ -11,10 +11,10 @@ import (
 	"log/slog"
 	"os"
 	"server/config"
-	"server/internal/cmds"
+	"server/pkg/util/cmds"
 	"time"
 
-	dice "github.com/dicedb/go-dice"
+	dicedb "github.com/dicedb/go-dice"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 )
 
 type DiceDB struct {
-	Client *dice.Client
+	Client *dicedb.Client
 	Ctx    context.Context
 }
 
@@ -36,13 +36,13 @@ func (db *DiceDB) CloseDiceDB() {
 }
 
 func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
-	diceClient := dice.NewClient(&dice.Options{
-		Addr:        configValue.DiceAddr,
+	diceClient := dicedb.NewClient(&dicedb.Options{
+		Addr:        configValue.DiceDBAddr,
 		DialTimeout: 10 * time.Second,
 		MaxRetries:  10,
 	})
 
-	// Ping the dice client to verify the connection
+	// Ping the dicedb client to verify the connection
 	err := diceClient.Ping(context.Background()).Err()
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 
 		val, err := db.getKey(command.Args[0])
 		switch {
-		case errors.Is(err, dice.Nil):
+		case errors.Is(err, dicedb.Nil):
 			return nil, errors.New("key does not exist")
 		case err != nil:
 			return nil, fmt.Errorf("get failed %v", err)
