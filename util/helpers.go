@@ -55,7 +55,7 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 
 	configValue := config.LoadConfig()
 	// Check if the command is blocklisted
-	if err := BlockListedCommand(command); err != nil && !configValue.IsTestEnv {
+	if err := BlockListedCommand(command); err != nil && !configValue.Server.IsTestEnv {
 		return nil, err
 	}
 
