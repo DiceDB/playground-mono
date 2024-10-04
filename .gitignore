@@ -2,3 +2,4 @@
 .vscode/
 .env
 /playground-mono
+__debug_bin*

@@ -5,8 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/http/httptest"
 	"server/internal/cmds"
+	"server/internal/middleware"
+	db "server/internal/tests/dbmocks"
 	"strings"
 )
 
@@ -160,4 +164,22 @@ func JSONResponse(w http.ResponseWriter, status int, data interface{}) {
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func MockHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		log.Fatalf("Failed to write response: %v", err)
+	}
+}
+
+func SetupRateLimiter(limit int64, window float64) (*httptest.ResponseRecorder, *http.Request, http.Handler) {
+	mockClient := db.NewDiceDBMock()
+
+	r := httptest.NewRequest("GET", "/cli/somecommand", http.NoBody)
+	w := httptest.NewRecorder()
+
+	rateLimiter := middleware.MockRateLimiter(mockClient, http.HandlerFunc(MockHandler), limit, window)
+
+	return w, r, rateLimiter
 }
