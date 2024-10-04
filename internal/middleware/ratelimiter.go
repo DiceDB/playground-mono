@@ -12,19 +12,17 @@ import (
 	"strings"
 	"time"
 
-	dice "github.com/dicedb/go-dice"
+	dicedb "github.com/dicedb/go-dice"
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
 func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Enable CORS for requests
 		enableCors(w, r)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Skip rate limiting for non-command endpoints
-		if !strings.Contains(r.URL.Path, "/cli/") {
+		if !strings.Contains(r.URL.Path, "/shell/exec/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -36,7 +34,7 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 
 		// Fetch the current request count
 		val, err := client.Client.Get(ctx, key).Result()
-		if err != nil && !errors.Is(err, dice.Nil) {
+		if err != nil && !errors.Is(err, dicedb.Nil) {
 			slog.Error("Error fetching request count", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -74,25 +72,19 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 			}
 		}
 
-		// Log the successful request increment
 		slog.Info("Request processed", "count", requestCount+1)
-
-		// Call the next handler
 		next.ServeHTTP(w, r)
 	})
 }
 
 func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Enable CORS for requests
 		enableCors(w, r)
-
-		// Set a request context with a timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		// Only apply rate limiting for specific paths (e.g., "/cli/")
-		if !strings.Contains(r.URL.Path, "/cli/") {
+		if !strings.Contains(r.URL.Path, "/shell/exec/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -144,7 +136,6 @@ func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, wi
 			}
 		}
 
-		// Log the successful request and pass control to the next handler
 		slog.Info("Request processed", "count", requestCount)
 		next.ServeHTTP(w, r)
 	})
