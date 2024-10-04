@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	config "server/config"
-	util "server/pkg/util"
+	util "server/util"
 	"testing"
 
 	"github.com/stretchr/testify/require"

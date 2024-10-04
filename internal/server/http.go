@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"server/internal/middleware"
 	"strings"
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"server/internal/db"
-	util "server/pkg/util"
+	util "server/util"
 )
 
 type HTTPServer struct {
@@ -39,7 +39,7 @@ func errorResponse(response string) string {
 	errorMessage := map[string]string{"error": response}
 	jsonResponse, err := json.Marshal(errorMessage)
 	if err != nil {
-		log.Printf("Error marshaling response: %v", err)
+		slog.Error("Error marshaling response: %v", slog.Any("err", err))
 		return `{"error": "internal server error"}`
 	}
 	return string(jsonResponse)
@@ -78,20 +78,20 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		log.Printf("starting server at %s\n", s.httpServer.Addr)
+		slog.Info("starting server at", slog.String("addr", s.httpServer.Addr))
 		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("http server error: %v", err)
+			slog.Error("http server error: %v", slog.Any("err", err))
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("shutting down server...")
+	slog.Info("shutting down server...")
 	return s.Shutdown()
 }
 
 func (s *HTTPServer) Shutdown() error {
 	if err := s.DiceClient.Client.Close(); err != nil {
-		log.Printf("failed to close dicedb client: %v", err)
+		slog.Error("failed to close dicedb client: %v", slog.Any("err", err))
 	}
 
 	return s.httpServer.Shutdown(context.Background())
@@ -116,7 +116,7 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 
 	respStr, ok := resp.(string)
 	if !ok {
-		log.Println("error: response is not a string", "error", err)
+		slog.Error("error: response is not a string", "error", slog.Any("err", err))
 		http.Error(w, errorResponse("internal Server Error"), http.StatusInternalServerError)
 		return
 	}
@@ -124,7 +124,7 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	httpResponse := HTTPResponse{Data: respStr}
 	responseJSON, err := json.Marshal(httpResponse)
 	if err != nil {
-		log.Println("error marshaling response to json", "error", err)
+		slog.Error("error marshaling response to json", "error", slog.Any("err", err))
 		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
 		return
 	}

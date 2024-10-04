@@ -11,7 +11,7 @@ import (
 	"log/slog"
 	"os"
 	"server/config"
-	"server/pkg/util/cmds"
+	"server/util/cmds"
 	"time"
 
 	dicedb "github.com/dicedb/go-dice"

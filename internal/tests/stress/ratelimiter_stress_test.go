@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"server/config"
-	util "server/pkg/util"
+	util "server/util"
 	"sync"
 	"testing"
 	"time"

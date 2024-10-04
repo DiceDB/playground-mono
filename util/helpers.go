@@ -1,16 +1,16 @@
-package helpers
+package utils
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"server/internal/middleware"
 	db "server/internal/tests/dbmocks"
-	cmds "server/pkg/util/cmds"
+	cmds "server/util/cmds"
 	"strings"
 )
 
@@ -57,13 +57,11 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 	}, nil
 }
 
-// extractCommand retrieves and formats the command from the URL path
 func extractCommand(path string) string {
-	command := strings.TrimPrefix(path, "/cli/")
+	command := strings.TrimPrefix(path, "/shell/exec/")
 	return strings.ToUpper(command)
 }
 
-// extractArgsFromRequest extracts arguments from the request's URL query and body
 func extractArgsFromRequest(r *http.Request, command string) ([]string, error) {
 	var args []string
 	queryParams := r.URL.Query()
@@ -84,7 +82,6 @@ func extractArgsFromRequest(r *http.Request, command string) ([]string, error) {
 	return args, nil
 }
 
-// parseRequestBody parses the body of the request and extracts arguments from JSON content
 func parseRequestBody(body io.ReadCloser) ([]string, error) {
 	var args []string
 	bodyContent, err := io.ReadAll(body)
@@ -111,7 +108,6 @@ func parseRequestBody(body io.ReadCloser) ([]string, error) {
 	return args, nil
 }
 
-// extractPriorityArgs extracts arguments for priority keys from the JSON body
 func extractPriorityArgs(jsonBody map[string]interface{}) []string {
 	var args []string
 	for _, key := range priorityKeys {
@@ -130,7 +126,6 @@ func extractPriorityArgs(jsonBody map[string]interface{}) []string {
 	return args
 }
 
-// extractRemainingArgs processes any remaining non-priority arguments in the JSON body
 func extractRemainingArgs(jsonBody map[string]interface{}) []string {
 	var args []string
 	for key, val := range jsonBody {
@@ -150,7 +145,6 @@ func extractRemainingArgs(jsonBody map[string]interface{}) []string {
 	return args
 }
 
-// convertListToStrings converts a list of interface{} to a list of strings
 func convertListToStrings(list []interface{}) []string {
 	var result []string
 	for _, v := range list {
@@ -159,7 +153,6 @@ func convertListToStrings(list []interface{}) []string {
 	return result
 }
 
-// convertMapToStrings converts a map of key-value pairs to a flat list of strings
 func convertMapToStrings(m map[string]interface{}) []string {
 	var result []string
 	for k, v := range m {
@@ -181,7 +174,7 @@ func JSONResponse(w http.ResponseWriter, status int, data interface{}) {
 func MockHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte("OK")); err != nil {
-		log.Fatalf("Failed to write response: %v", err)
+		slog.Error("Failed to write response: %v", slog.Any("err", err))
 	}
 }
 

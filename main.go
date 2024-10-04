@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"server/config"
 	"server/internal/db"
@@ -13,7 +13,7 @@ func main() {
 	configValue := config.LoadConfig()
 	diceClient, err := db.InitDiceClient(configValue)
 	if err != nil {
-		log.Fatalf("Failed to initialize DiceDB client: %v", err)
+		slog.Error("Failed to initialize DiceDB client: %v", slog.Any("err", err))
 	}
 
 	// Create mux and register routes
@@ -29,6 +29,6 @@ func main() {
 
 	// Run the HTTP Server
 	if err := httpServer.Run(ctx); err != nil {
-		log.Printf("server failed: %v\n", err)
+		slog.Error("server failed: %v\n", slog.Any("err", err))
 	}
 }
