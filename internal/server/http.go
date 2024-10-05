@@ -42,6 +42,7 @@ func errorResponse(response string) string {
 		slog.Error("Error marshaling response: %v", slog.Any("err", err))
 		return `{"error": "internal server error"}`
 	}
+
 	return string(jsonResponse)
 }
 
@@ -117,7 +118,7 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
-		http.Error(w, errorResponse("error executing command"), http.StatusBadRequest)
+		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
 		return
 	}
 

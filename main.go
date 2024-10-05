@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
 	"server/config"
 	"server/internal/db"
 	"server/internal/server"
@@ -14,6 +15,7 @@ func main() {
 	diceClient, err := db.InitDiceClient(configValue)
 	if err != nil {
 		slog.Error("Failed to initialize DiceDB client: %v", slog.Any("err", err))
+		os.Exit(1)
 	}
 
 	// Create mux and register routes
