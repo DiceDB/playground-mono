@@ -111,6 +111,7 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
+		slog.Error("error: failure in executing command", "error", slog.Any("err", err))
 		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
 		return
 	}
