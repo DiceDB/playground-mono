@@ -18,7 +18,10 @@ import (
 // RateLimiter middleware to limit requests based on a specified limit and duration
 func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		enableCors(w, r)
+		if handleCors(w, r) {
+			return
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -79,7 +82,10 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 
 func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		enableCors(w, r)
+		if handleCors(w, r) {
+			return
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
