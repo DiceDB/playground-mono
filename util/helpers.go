@@ -10,34 +10,9 @@ import (
 	"net/http/httptest"
 	"server/internal/middleware"
 	db "server/internal/tests/dbmocks"
-	cmds "server/util/cmds"
+	"server/util/cmds"
 	"strings"
 )
-
-const (
-	Key         = "key"
-	Keys        = "keys"
-	KeyPrefix   = "key_prefix"
-	Field       = "field"
-	Path        = "path"
-	Value       = "value"
-	Values      = "values"
-	User        = "user"
-	Password    = "password"
-	Seconds     = "seconds"
-	KeyValues   = "key_values"
-	True        = "true"
-	QwatchQuery = "query"
-	Offset      = "offset"
-	Member      = "member"
-	Members     = "members"
-
-	JSONIngest string = "JSON.INGEST"
-)
-
-var priorityKeys = []string{
-	Key, Keys, Field, Path, Value, Values, Seconds, User, Password, KeyValues, QwatchQuery, Offset, Member, Members,
-}
 
 // ParseHTTPRequest parses an incoming HTTP request and converts it into a CommandRequest for Redis commands
 func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
@@ -46,7 +21,7 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 		return nil, errors.New("invalid command")
 	}
 
-	args, err := extractArgsFromRequest(r, command)
+	args, err := newExtractor(r)
 	if err != nil {
 		return nil, err
 	}
@@ -62,29 +37,9 @@ func extractCommand(path string) string {
 	return strings.ToUpper(command)
 }
 
-func extractArgsFromRequest(r *http.Request, command string) ([]string, error) {
+func newExtractor(r *http.Request) ([]string, error) {
 	var args []string
-	queryParams := r.URL.Query()
-	keyPrefix := queryParams.Get(KeyPrefix)
-
-	if keyPrefix != "" && command == JSONIngest {
-		args = append(args, keyPrefix)
-	}
-
-	if r.Body != nil {
-		bodyArgs, err := parseRequestBody(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		args = append(args, bodyArgs...)
-	}
-
-	return args, nil
-}
-
-func parseRequestBody(body io.ReadCloser) ([]string, error) {
-	var args []string
-	bodyContent, err := io.ReadAll(body)
+	bodyContent, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +48,7 @@ func parseRequestBody(body io.ReadCloser) ([]string, error) {
 		return args, nil
 	}
 
-	var jsonBody map[string]interface{}
+	var jsonBody []interface{}
 	if err := json.Unmarshal(bodyContent, &jsonBody); err != nil {
 		return nil, err
 	}
@@ -102,63 +57,16 @@ func parseRequestBody(body io.ReadCloser) ([]string, error) {
 		return nil, fmt.Errorf("empty JSON object")
 	}
 
-	args = append(args, extractPriorityArgs(jsonBody)...)
-	args = append(args, extractRemainingArgs(jsonBody)...)
+	for _, val := range jsonBody {
+		s, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("invalid input")
+		}
+
+		args = append(args, s)
+	}
 
 	return args, nil
-}
-
-func extractPriorityArgs(jsonBody map[string]interface{}) []string {
-	var args []string
-	for _, key := range priorityKeys {
-		if val, exists := jsonBody[key]; exists {
-			switch key {
-			case Keys, Values, Members:
-				args = append(args, convertListToStrings(val.([]interface{}))...)
-			case KeyValues:
-				args = append(args, convertMapToStrings(val.(map[string]interface{}))...)
-			default:
-				args = append(args, fmt.Sprintf("%v", val))
-			}
-			delete(jsonBody, key)
-		}
-	}
-	return args
-}
-
-func extractRemainingArgs(jsonBody map[string]interface{}) []string {
-	var args []string
-	for key, val := range jsonBody {
-		switch v := val.(type) {
-		case string:
-			args = append(args, key)
-			if !strings.EqualFold(v, True) {
-				args = append(args, v)
-			}
-		case map[string]interface{}, []interface{}:
-			jsonValue, _ := json.Marshal(v)
-			args = append(args, string(jsonValue))
-		default:
-			args = append(args, key, fmt.Sprintf("%v", v))
-		}
-	}
-	return args
-}
-
-func convertListToStrings(list []interface{}) []string {
-	var result []string
-	for _, v := range list {
-		result = append(result, fmt.Sprintf("%v", v))
-	}
-	return result
-}
-
-func convertMapToStrings(m map[string]interface{}) []string {
-	var result []string
-	for k, v := range m {
-		result = append(result, k, fmt.Sprintf("%v", v))
-	}
-	return result
 }
 
 // JSONResponse sends a JSON response to the client
