@@ -79,7 +79,7 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 	case []interface{}:
 		return renderListResponse(v)
 	case int64:
-		return fmt.Sprintf("%v", v), nil
+		return fmt.Sprintf("(integer) %v", v), nil
 	case nil:
 		return RespNil, nil
 	default:
