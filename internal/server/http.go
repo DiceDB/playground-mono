@@ -116,7 +116,6 @@ if err := util.BlockListedCommand(diceCmd.Cmd); err != nil {
     return
 }
 
-
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
 		slog.Error("error: failure in executing command", "error", slog.Any("err", err))
