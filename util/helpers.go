@@ -40,7 +40,7 @@ var blocklistedCommands = map[string]bool{
 // BlockListedCommand checks if a command is blocklisted
 func BlockListedCommand(cmd string) error {
 	if _, exists := blocklistedCommands[strings.ToUpper(cmd)]; exists {
-		return errors.New("command is blocklisted")
+		return errors.New("ERR unknown command '" + cmd + "'")
 	}
 	return nil
 }
