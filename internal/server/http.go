@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -102,13 +101,7 @@ func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	diceCmd, err := util.ParseHTTPRequest(r)
 	if err != nil {
-		http.Error(w, errorResponse("error parsing http request"), http.StatusBadRequest)
-		return
-	}
-
-	// Check if the command is blocklisted
-	if err := util.BlockListedCommand(diceCmd.Cmd); err != nil {
-		http.Error(w, errorResponse(fmt.Sprintf("ERR unknown command '%s'", diceCmd.Cmd)), http.StatusForbidden)
+		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
 		return
 	}
 
