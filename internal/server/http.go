@@ -4,15 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt" 
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"server/internal/middleware"
 	"server/internal/db"
+	"server/internal/middleware"
 	util "server/util"
 )
 
@@ -21,8 +21,6 @@ type HTTPServer struct {
 	DiceClient *db.DiceDB
 }
 
-// HandlerMux wraps ServeMux and forces REST paths to lowercase
-// and attaches a rate limiter with the handler
 type HandlerMux struct {
 	mux         *http.ServeMux
 	rateLimiter func(http.ResponseWriter, *http.Request, http.Handler)
@@ -48,10 +46,8 @@ func errorResponse(response string) string {
 }
 
 func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Convert the path to lowercase before passing to the underlying mux.
 	middleware.TrailingSlashMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.ToLower(r.URL.Path)
-		// Apply rate limiter
 		cim.rateLimiter(w, r, cim.mux)
 	})).ServeHTTP(w, r)
 }
@@ -110,11 +106,11 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-// Check if the command is blocklisted
-if err := util.BlockListedCommand(diceCmd.Cmd); err != nil {
-    http.Error(w, errorResponse(fmt.Sprintf("ERR unknown command '%s'", diceCmd.Cmd)), http.StatusForbidden)
-    return
-}
+	// Check if the command is blocklisted
+	if err := util.BlockListedCommand(diceCmd.Cmd); err != nil {
+		http.Error(w, errorResponse(fmt.Sprintf("ERR unknown command '%s'", diceCmd.Cmd)), http.StatusForbidden)
+		return
+	}
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {
@@ -126,7 +122,7 @@ if err := util.BlockListedCommand(diceCmd.Cmd); err != nil {
 	respStr, ok := resp.(string)
 	if !ok {
 		slog.Error("error: response is not a string", "error", slog.Any("err", err))
-		http.Error(w, errorResponse("internal Server Error"), http.StatusInternalServerError)
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
 		return
 	}
 
