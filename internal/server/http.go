@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"  // Added to format error messages
 	"log/slog"
 	"net/http"
 	"strings"
