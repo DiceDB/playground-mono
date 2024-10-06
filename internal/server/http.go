@@ -110,12 +110,12 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if the command is blacklisted
-	if err := util.IsBlacklistedCommand(diceCmd.Cmd); err != nil {
-		// Return the error message in the specified format
-		http.Error(w, errorResponse(fmt.Sprintf("ERR unknown command '%s'", diceCmd.Cmd)), http.StatusForbidden)
-		return
-	}
+// Check if the command is blocklisted
+if err := util.BlockListedCommand(diceCmd.Cmd); err != nil {
+    http.Error(w, errorResponse(fmt.Sprintf("ERR unknown command '%s'", diceCmd.Cmd)), http.StatusForbidden)
+    return
+}
+
 
 	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
 	if err != nil {

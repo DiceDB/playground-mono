@@ -11,11 +11,11 @@ var blacklistedCommands = []string{
 	"LATENCY", "CLIENT", "SLEEP", "PERSIST",
 }
 
-// IsBlacklistedCommand checks if a command is blacklisted
-func IsBlacklistedCommand(cmd string) error {
+// BlockListedCommand checks if a command is blocklisted
+func BlockListedCommand(cmd string) error {
 	for _, blacklistedCmd := range blacklistedCommands {
 		if strings.ToUpper(cmd) == blacklistedCmd {
-			return errors.New("command is blacklisted")
+			return errors.New("command is blocklisted")
 		}
 	}
 	return nil
