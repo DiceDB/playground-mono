@@ -89,10 +89,6 @@ func newExtractor(r *http.Request) ([]string, error) {
 		return nil, err
 	}
 
-	if len(jsonBody) == 0 {
-		return nil, fmt.Errorf("empty JSON object")
-	}
-
 	for _, val := range jsonBody {
 		s, ok := val.(string)
 		if !ok {
