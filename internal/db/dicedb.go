@@ -12,7 +12,6 @@ import (
 	"os"
 	"server/config"
 	"server/util/cmds"
-	"strings"
 	"time"
 
 	dicedb "github.com/dicedb/go-dice"
@@ -60,8 +59,8 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 	for _, arg := range command.Args {
 		args = append(args, arg)
 	}
-
 	res, err := db.Client.Do(db.Ctx, args...).Result()
+
 	if errors.Is(err, dicedb.Nil) {
 		return RespNil, nil
 	}
@@ -70,44 +69,9 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 		return nil, fmt.Errorf("(error) %v", err)
 	}
 
-	// Print the result based on its type
-	switch v := res.(type) {
-	case string:
-		return v, nil
-	case []byte:
-		return string(v), nil
-	case []interface{}:
-		return renderListResponse(v)
-	case int64:
-		return fmt.Sprintf("(integer) %v", v), nil
-	case nil:
-		return RespNil, nil
-	default:
-		return fmt.Sprintf("%v", v), nil
-	}
-}
+	render := cmds.GetRender(command.Cmd)
 
-func renderListResponse(items []interface{}) (string, error) {
-	if len(items)%2 != 0 {
-		return "", fmt.Errorf("(error) invalid result format")
-	}
+	result := render(res)
 
-	var builder strings.Builder
-	for i := 0; i < len(items); i += 2 {
-		field, ok1 := items[i].(string)
-		value, ok2 := items[i+1].(string)
-
-		// Check if both field and value are valid strings
-		if !ok1 || !ok2 {
-			return "", fmt.Errorf("(error) invalid result type")
-		}
-
-		// Append the formatted field and value
-		_, err := fmt.Fprintf(&builder, "%d) \"%s\"\n%d) \"%s\"\n", i+1, field, i+2, value)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return builder.String(), nil
+	return result, nil
 }
