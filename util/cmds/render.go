@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var nilTuple = "(nil)"
+var RespNil = "(nil)"
 var emptyList = "(empty list or set)"
 var invalidString = "(error) invalid type"
 
@@ -26,7 +26,7 @@ func GetRender(commandName string) DiceDBCallback {
 
 func renderBulkString(value interface{}) interface{} {
 	if value == nil {
-		return nilTuple
+		return RespNil
 	}
 	result, ok := value.(int64)
 	if ok {
@@ -37,7 +37,7 @@ func renderBulkString(value interface{}) interface{} {
 
 func renderInt(value interface{}) interface{} {
 	if value == nil {
-		return nilTuple
+		return RespNil
 	}
 	if intValue, ok := value.(int64); ok {
 		return fmt.Sprintf("(integer) %d", intValue)
@@ -53,8 +53,16 @@ func renderList(value interface{}) interface{} {
 
 	var builder strings.Builder
 	for i, item := range items {
+		// Convert item to string
+		if item == nil {
+			builder.WriteString(fmt.Sprintf("%d) %v\n", i+1, RespNil))
+			continue
+		}
 		strItem := fmt.Sprintf("%v", item)
-		quoted := doubleQuotes(strItem)
+
+		// Properly format with double quotes
+		quoted := fmt.Sprintf("\"%q\"", strItem)
+
 		builder.WriteString(fmt.Sprintf("%d) %s\n", i+1, quoted))
 	}
 	return builder.String()
@@ -76,7 +84,7 @@ func renderStringOrInt(value interface{}) interface{} {
 
 func renderSimpleString(value interface{}) interface{} {
 	if value == nil {
-		return nilTuple
+		return RespNil
 	}
 	text := fmt.Sprintf("%v", value)
 	return text
@@ -149,9 +157,4 @@ func renderMembers(value interface{}) interface{} {
 	}
 
 	return builder.String()
-}
-
-func doubleQuotes(value string) string {
-	escaped := strings.ReplaceAll(value, `"`, `\"`)
-	return fmt.Sprintf(`"%q"`, escaped)
 }
