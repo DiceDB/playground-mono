@@ -9,12 +9,11 @@ format:
 run:
 	go run main.go
 
-# TODO: Uncomment once integration-tests are added
-#test:
-#	go test -v -count=1 -p=1 ./integration_tests/...
-#
-#test-one:
-#	go test -v -race -count=1 --run $(TEST_FUNC) ./integration_tests/...
+test:
+	go test -v -count=1 -p=1 ./internal/tests/integration...
+
+test-one:
+	go test -v -race -count=1 --run $(TEST_FUNC) ./internal/tests/integration...
 
 unittest:
 	go test -race -count=1 ./internal/...
