@@ -1,3 +1,5 @@
+// modifed helpers.go
+
 package utils
 
 import (
@@ -8,12 +10,27 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"runtime/debug"
 	"server/config"
 	"server/internal/middleware"
 	db "server/internal/tests/dbmocks"
 	"server/util/cmds"
 	"strings"
 )
+
+type HttpResponse struct {
+    Data        interface{} 	`json:"data"`
+    Error       *ErrorDetails	`json:"error"`
+    HasError    bool        	`json:"hasError"`
+    HasData     bool        	`json:"hasData"`
+    StackTrace  *string     	`json:"stackTrace,omitempty"`
+}
+
+type ErrorDetails struct {
+    Message    *string  `json:"message"`
+    StackTrace *string `json:"stackTrace,omitempty"`
+}
 
 // Map of blocklisted commands
 var blocklistedCommands = map[string]bool{
@@ -131,3 +148,47 @@ func SetupRateLimiter(limit int64, window float64) (*httptest.ResponseRecorder, 
 
 	return w, r, rateLimiter
 }
+
+func generateHttpResponse(w http.ResponseWriter, statusCode int, data interface{}, err *string) {
+    response := HttpResponse{
+        HasData:  data != nil,
+        HasError: err != nil,
+        Data:     data,
+    }
+
+	if err != nil {
+		errorDetails := &ErrorDetails{
+			Message: err,
+		}
+		if os.Getenv("ENV") == "development" {
+			stackTrace := string(debug.Stack())
+			errorDetails.StackTrace  = &stackTrace
+		}
+		response.Error  = errorDetails
+	}
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(statusCode)	
+
+    if encodeErr := json.NewEncoder(w).Encode(response); encodeErr != nil {
+        http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+    }
+}
+
+func HttpResponseJSON(w http.ResponseWriter,statusCode int, data interface{}) {
+    generateHttpResponse(w, http.StatusOK, data, nil)
+}
+
+func HttpResponseException(w http.ResponseWriter, statusCode int, err interface{}) {
+    var errorStr string
+    switch e := err.(type) {
+    case error:
+        errorStr = e.Error()
+    case string:
+        errorStr = e
+    default:
+        errorStr = "Unknown error type"
+    }
+    generateHttpResponse(w, statusCode, nil, &errorStr)
+}
+
