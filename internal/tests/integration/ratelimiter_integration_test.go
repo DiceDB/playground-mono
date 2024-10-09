@@ -40,3 +40,18 @@ func TestRateLimiterExceedsLimit(t *testing.T) {
 	require.Equal(t, http.StatusTooManyRequests, w.Code)
 	require.Contains(t, w.Body.String(), "429 - Too Many Requests")
 }
+
+func TestRateLimitHeadersSet(t *testing.T) {
+	configValue := config.LoadConfig()
+	limit := configValue.RequestLimitPerMin
+	window := configValue.RequestWindowSec
+
+	w, r, rateLimiter := util.SetupRateLimiter(limit, window)
+
+	rateLimiter.ServeHTTP(w, r)
+
+	require.NotEmpty(t, w.Header().Get("x-ratelimit-limit"), "x-ratelimit-limit should be set")
+	require.NotEmpty(t, w.Header().Get("x-ratelimit-remaining"), "x-ratelimit-remaining should be set")
+	require.NotEmpty(t, w.Header().Get("x-ratelimit-used"), "x-ratelimit-used should be set")
+	require.NotEmpty(t, w.Header().Get("x-ratelimit-reset"), "x-ratelimit-reset should be set")
+}
