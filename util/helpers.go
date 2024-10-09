@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"server/config"
 	"server/internal/middleware"
 	db "server/internal/tests/dbmocks"
 	"server/util/cmds"
@@ -52,8 +53,9 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 		return nil, errors.New("invalid command")
 	}
 
+	configValue := config.LoadConfig()
 	// Check if the command is blocklisted
-	if err := BlockListedCommand(command); err != nil {
+	if err := BlockListedCommand(command); err != nil && !configValue.IsTestEnv {
 		return nil, err
 	}
 

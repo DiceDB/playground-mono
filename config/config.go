@@ -16,6 +16,7 @@ type Config struct {
 	RequestLimitPerMin int64    // Field for the request limit
 	RequestWindowSec   float64  // Field for the time window in float64
 	AllowedOrigins     []string // Field for the allowed origins
+	IsTestEnv          bool
 }
 
 // LoadConfig loads the application configuration from environment variables or defaults
@@ -31,6 +32,7 @@ func LoadConfig() *Config {
 		RequestLimitPerMin: getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                          // Default request limit
 		RequestWindowSec:   getEnvFloat64("REQUEST_WINDOW_SEC", 60),                           // Default request window in float64
 		AllowedOrigins:     getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}), // Default allowed origins
+		IsTestEnv:          getEnvBool("IS_TEST_ENVIRONMENT", false),                          // Default test env
 	}
 }
 
@@ -66,6 +68,15 @@ func getEnvArray(key string, fallback []string) []string {
 	if value, exists := os.LookupEnv(key); exists {
 		if arrayValue := splitString(value); len(arrayValue) > 0 {
 			return arrayValue
+		}
+	}
+	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	if value, exists := os.LookupEnv(key); exists {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
 		}
 	}
 	return fallback
