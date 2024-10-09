@@ -96,8 +96,9 @@ func newExtractor(r *http.Request) ([]string, error) {
 		if !ok {
 			return nil, fmt.Errorf("invalid input")
 		}
-
-		args = append(args, s)
+		if strings.TrimSpace(s) != "" {
+			args = append(args, s)
+		}
 	}
 
 	return args, nil
