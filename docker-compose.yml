@@ -20,8 +20,8 @@ services:
       - dicedb
     environment:
       - DICEDB_ADDR=dicedb:7379
-      - DICEDB_USERNAME=${DICE_USERNAME}
-      - DICEDB_PASSWORD=${DICE_PASSWORD}
+      - DICEDB_USERNAME=${DICEDB_USERNAME}
+      - DICEDB_PASSWORD=${DICEDB_PASSWORD}
     networks:
      - dice-network
     
