@@ -13,7 +13,7 @@ import (
 func main() {
 	configValue := config.LoadConfig()
 	slog.Info("aasif!");
-	slog.Info(configValue);
+	slog.Info("Config loaded:", slog.Any("configValue", configValue))
 	slog.Info("aasif printed!");
 	diceClient, err := db.InitDiceClient(configValue)
 	if err != nil {
