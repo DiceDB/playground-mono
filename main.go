@@ -12,6 +12,9 @@ import (
 
 func main() {
 	configValue := config.LoadConfig()
+	slog.info("aasif!");
+	slog.info(configValue);
+	slog.info("aasif printed!");
 	diceClient, err := db.InitDiceClient(configValue)
 	if err != nil {
 		slog.Error("Failed to initialize DiceDB client: %v", slog.Any("err", err))
