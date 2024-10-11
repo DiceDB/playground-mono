@@ -99,6 +99,7 @@ func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
 }
 
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
+	slog.Info("aasif request:", slog.Any("request=", r))
 	diceCmd, err := util.ParseHTTPRequest(r)
 	slog.Info("aasif diceCmd:", slog.Any("diceCmd", diceCmd))
 	if err != nil {
