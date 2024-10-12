@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"server/config"
+	"server/internal/cron"
 	"server/internal/db"
 	"server/internal/server"
 )
@@ -29,8 +30,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	cron.StartCleanupCron(ctx, diceClient, configValue.CleanupCronFrequency)
+
 	// Run the HTTP Server
 	if err := httpServer.Run(ctx); err != nil {
 		slog.Error("server failed: %v\n", slog.Any("err", err))
 	}
+
 }
