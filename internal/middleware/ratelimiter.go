@@ -159,4 +159,7 @@ func addRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTim
 	w.Header().Set("x-ratelimit-remaining", strconv.FormatInt(remaining, 10))
 	w.Header().Set("x-ratelimit-used", strconv.FormatInt(used, 10))
 	w.Header().Set("x-ratelimit-reset", strconv.FormatInt(resetTime, 10))
+
+	// Expose the rate limit headers to the client
+	w.Header().Set("Access-Control-Expose-Headers", "x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-used, x-ratelimit-reset")	
 }
