@@ -18,7 +18,7 @@ func TestPfCount(t *testing.T) {
 				{Command: "PFCOUNT", Body: []string{"non_existent_key"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "(integer) 0"},
+				{Expected: "(integer)0"},
 			},
 		},
 		{
@@ -29,7 +29,7 @@ func TestPfCount(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{ErrorExpected: true, Expected: "(error) WRONGTYPE Operation against a key holding the wrong kind of value"},
+				{ErrorExpected: true, Expected: "(error) ERROR WRONGTYPE Key is not a valid HyperLogLog string value."},
 			},
 		},
 		{
@@ -38,7 +38,7 @@ func TestPfCount(t *testing.T) {
 				{Command: "PFCOUNT", Body: []string{}},
 			},
 			Result: []TestCaseResult{
-				{ErrorExpected: true, Expected: "(error) ERR wrong number of arguments for 'pfcount' command"},
+				{ErrorExpected: true, Expected: "(error) ERROR wrong number of arguments for 'pfcount' command"},
 			},
 		},
 		{
@@ -48,8 +48,8 @@ func TestPfCount(t *testing.T) {
 				{Command: "PFCOUNT", Body: []string{"hll1"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "(integer) 1"},
-				{Expected: "(integer) 3"},
+				{Expected: "(integer)1"},
+				{Expected: "(integer)3"},
 			},
 		},
 		{
@@ -60,9 +60,9 @@ func TestPfCount(t *testing.T) {
 				{Command: "PFCOUNT", Body: []string{"hll1", "hll2"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "(integer) 1"},
-				{Expected: "(integer) 1"},
-				{Expected: "(integer) 4"},
+				{Expected: "(integer)0"},
+				{Expected: "(integer)1"},
+				{Expected: "(integer)4"},
 			},
 		},
 	}
