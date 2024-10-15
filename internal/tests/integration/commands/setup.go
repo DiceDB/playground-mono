@@ -11,6 +11,7 @@ import (
 	"server/config"
 	"server/internal/db"
 	"server/internal/server"
+	"time"
 )
 
 type HTTPCommand struct {
@@ -35,6 +36,7 @@ type TestCase struct {
 	Name     string
 	Commands []HTTPCommand
 	Result   []TestCaseResult
+	Delays   []time.Duration
 }
 
 func NewHTTPCommandExecutor() (*HTTPCommandExecutor, error) {
