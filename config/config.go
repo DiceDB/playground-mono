@@ -27,7 +27,7 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		DiceDBAddr:         "192.168.1.3:7379",                           // Default DiceDB address
+		DiceDBAddr:         "192.168.1.10:7379",                           // Default DiceDB address
 		ServerPort:         getEnv("SERVER_PORT", ":8080"),                                    // Default server port
 		RequestLimitPerMin: getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                          // Default request limit
 		RequestWindowSec:   getEnvFloat64("REQUEST_WINDOW_SEC", 60),                           // Default request window in float64
