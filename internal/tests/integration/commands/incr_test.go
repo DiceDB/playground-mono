@@ -98,12 +98,31 @@ func TestIncr(t *testing.T) {
 			},
 			Delays: []time.Duration{0, 0, 0, 2 * time.Second},
 		},
+		{
+			Name: "Increment non-integer values",
+			Commands: []HTTPCommand{
+				{Command: "SET", Body: []string{"float_key", "3.14"}},
+				{Command: "INCR", Body: []string{"float_key"}},
+				{Command: "SET", Body: []string{"string_key", "hello"}},
+				{Command: "INCR", Body: []string{"string_key"}},
+				{Command: "SET", Body: []string{"bool_key", "true"}},
+				{Command: "INCR", Body: []string{"bool_key"}},
+			},
+			Result: []TestCaseResult{
+				{Expected: "OK"},
+				{ErrorExpected: true, Expected: "(error) ERR WRONGTYPE Operation against a key holding the wrong kind of value"},
+				{Expected: "OK"},
+				{ErrorExpected: true, Expected: "(error) ERR WRONGTYPE Operation against a key holding the wrong kind of value"},
+				{Expected: "OK"},
+				{ErrorExpected: true, Expected: "(error) ERR WRONGTYPE Operation against a key holding the wrong kind of value"},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			for i, cmd := range tc.Commands {
-				if tc.Delays[i] > 0 {
+				if tc.Delays != nil && tc.Delays[i] > 0 {
 					time.Sleep(tc.Delays[i])
 				}
 				response, err := exec.FireCommand(cmd)
