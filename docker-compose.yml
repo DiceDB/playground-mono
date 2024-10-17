@@ -2,7 +2,7 @@ services:
   dicedb:
     image: dicedb/dicedb:latest
     ports:
-      - "7379"
+      - "7379:7379"
     healthcheck:
      test: ["CMD", "PING"]
      interval: 10s
@@ -19,7 +19,7 @@ services:
     depends_on:
       - dicedb
     environment:
-      - DICEDB_ADDR=dicedb:7379
+      - DICEDB_ADDR=localhost:7379
       - DICEDB_USERNAME=${DICEDB_USERNAME}
       - DICEDB_PASSWORD=${DICEDB_PASSWORD}
     networks:

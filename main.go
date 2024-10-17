@@ -8,6 +8,8 @@ import (
 	"server/config"
 	"server/internal/db"
 	"server/internal/server"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
