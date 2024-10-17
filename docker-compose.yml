@@ -2,7 +2,7 @@ services:
   dicedb:
     image: dicedb/dicedb:latest
     ports:
-      - "7379"
+      - "7379:7379"
     healthcheck:
      test: ["CMD", "PING"]
      interval: 10s
