@@ -14,8 +14,8 @@ import (
 
 func TestRateLimiterUnderStress(t *testing.T) {
 	configValue := config.LoadConfig()
-	limit := configValue.RequestLimitPerMin
-	window := configValue.RequestWindowSec
+	limit := configValue.Server.RequestLimitPerMin
+	window := configValue.Server.RequestWindowSec
 
 	_, r, rateLimiter := util.SetupRateLimiter(limit, window)
 
