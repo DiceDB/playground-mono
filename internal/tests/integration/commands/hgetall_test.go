@@ -30,8 +30,8 @@ func TestHGetAll(t *testing.T) {
 				{Command: "HGETALL", Body: []string{"user"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "1"},
-				{Expected: "1) \"name\"\n2) \"John Doe\"\n"},
+				{Expected: "(integer) 1"},
+				{Expected: "1) name\n   John Doe\n"},
 			},
 		},
 		{

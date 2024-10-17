@@ -18,7 +18,7 @@ func TestHSet(t *testing.T) {
 				{Command: "HSET", Body: []string{"user", "name", "John Doe", "age", "30"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "2"},
+				{Expected: "(integer) 2"},
 			},
 		},
 		{
@@ -28,8 +28,8 @@ func TestHSet(t *testing.T) {
 				{Command: "HSET", Body: []string{"user1", "name", "John Loe", "gender", "Male"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "2"},
-				{Expected: "1"},
+				{Expected: "(integer) 2"},
+				{Expected: "(integer) 1"},
 			},
 		},
 		{

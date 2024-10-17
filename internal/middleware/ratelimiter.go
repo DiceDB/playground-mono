@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	dicedb "github.com/dicedb/go-dice"
+	"github.com/dicedb/dicedb-go"
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
