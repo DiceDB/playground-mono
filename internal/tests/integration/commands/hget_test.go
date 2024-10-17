@@ -30,8 +30,8 @@ func TestHGet(t *testing.T) {
 				{Command: "HGET", Body: []string{"user", "name"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "2"},
-				{Expected: "John Doe"},
+				{Expected: "(integer) 2"},
+				{Expected: "\"John Doe\""},
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func TestHGet(t *testing.T) {
 				{Command: "HGET", Body: []string{"user1", "gender"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "2"},
+				{Expected: "(integer) 2"},
 				{Expected: "(nil)"},
 			},
 		},

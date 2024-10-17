@@ -23,7 +23,7 @@ func TestSet(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "v"},
+				{Expected: "\"v\""},
 			},
 		},
 		{
@@ -34,7 +34,7 @@ func TestSet(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "123456789"}, // This is Redis' scientific notation for large numbers
+				{Expected: "(integer) 123456789"}, // This is Redis' scientific notation for large numbers
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestSet(t *testing.T) {
 			Result: []TestCaseResult{
 				{Expected: "OK"},
 				{Expected: "OK"},
-				{Expected: "5"}, // As the value 5 is stored as a string
+				{Expected: "(integer) 5"}, // As the value 5 is stored as a string
 			},
 		},
 		{
@@ -67,7 +67,7 @@ func TestSet(t *testing.T) {
 				{Command: "GET", Body: []string{"a"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "0"}, // DEL returns number of deleted keys
+				{Expected: "(integer) 0"}, // DEL returns number of deleted keys
 				{Expected: "(nil)"},
 				{Expected: "(nil)"},
 			},
@@ -80,9 +80,9 @@ func TestSet(t *testing.T) {
 				{Command: "GET", Body: []string{"c"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "0"}, // DEL returns number of deleted keys
+				{Expected: "(integer) 0"}, // DEL returns number of deleted keys
 				{Expected: "OK"},
-				{Expected: "v"},
+				{Expected: "\"v\""},
 			},
 		},
 		{
@@ -94,9 +94,9 @@ func TestSet(t *testing.T) {
 				{Command: "SET", Body: []string{"b", "v", "NX"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "0"}, // DEL returns number of deleted keys
+				{Expected: "(integer) 0"}, // DEL returns number of deleted keys
 				{Expected: "OK"},
-				{Expected: "v"},
+				{Expected: "\"v\""},
 				{Expected: "(nil)"}, // NX fails because the key already exists
 			},
 		},
@@ -121,7 +121,7 @@ func TestSet(t *testing.T) {
 			Result: []TestCaseResult{
 				{Expected: "OK"},
 				{Expected: "OK"},
-				{Expected: "v2"},
+				{Expected: "\"v2\""},
 			},
 		},
 		{
@@ -136,7 +136,7 @@ func TestSet(t *testing.T) {
 				{Expected: "OK"},
 				{Expected: "OK"},
 				{Expected: "OK"},
-				{Expected: "v3"},
+				{Expected: "\"v3\""},
 			},
 		},
 		{
@@ -149,7 +149,7 @@ func TestSet(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "v"},
+				{Expected: "\"v\""},
 				{Expected: "OK"},
 				{Expected: "(nil)"}, // After expiration
 			},

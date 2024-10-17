@@ -20,7 +20,7 @@ func TestExists(t *testing.T) {
 				{Command: "EXISTS", Body: []string{"non_existent_key"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "0"}, // Expecting 0 because the key should not exist
+				{Expected: "(integer) 0"}, // Expecting 0 because the key should not exist
 			},
 		},
 		{
@@ -30,8 +30,8 @@ func TestExists(t *testing.T) {
 				{Command: "EXISTS", Body: []string{"existing_key"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "OK"}, // Expecting "OK" from the SET command
-				{Expected: "1"},  // Expecting 1 because the key should exist
+				{Expected: "OK"},          // Expecting "OK" from the SET command
+				{Expected: "(integer) 1"}, // Expecting 1 because the key should exist
 			},
 		},
 		{
@@ -44,7 +44,7 @@ func TestExists(t *testing.T) {
 			Result: []TestCaseResult{
 				{Expected: "OK"},
 				{Expected: "OK"},
-				{Expected: "2"}, // Expecting 2 because only key1 and key2 exist
+				{Expected: "(integer) 2"}, // Expecting 2 because only key1 and key2 exist
 			},
 		},
 		{

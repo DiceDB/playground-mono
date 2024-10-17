@@ -30,11 +30,11 @@ func TestIncr(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"},
-				{Expected: "2"},
-				{Expected: "1"},
-				{Expected: "2"},
-				{Expected: "1"},
+				{Expected: "(integer) 1"},
+				{Expected: "(integer) 2"},
+				{Expected: "(integer) 1"},
+				{Expected: "(integer) 2"},
+				{Expected: "(integer) 1"},
 			},
 		},
 		{
@@ -46,8 +46,8 @@ func TestIncr(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: strconv.FormatInt(math.MinInt64+1, 10)},
-				{Expected: strconv.FormatInt(math.MinInt64+2, 10)},
+				{Expected: "(integer) " + strconv.FormatInt(math.MinInt64+1, 10)},
+				{Expected: "(integer) " + strconv.FormatInt(math.MinInt64+2, 10)},
 			},
 		},
 		{
@@ -58,9 +58,9 @@ func TestIncr(t *testing.T) {
 				{Command: "INCR", Body: []string{"non_existent"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "1"},
-				{Expected: "1"},
-				{Expected: "2"},
+				{Expected: "(integer) 1"},
+				{Expected: "(integer) 1"},
+				{Expected: "(integer) 2"},
 			},
 		},
 		{
@@ -75,11 +75,11 @@ func TestIncr(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "43"},
+				{Expected: "(integer) 43"},
 				{Expected: "OK"},
-				{Expected: "-9"},
+				{Expected: "(integer) -9"},
 				{Expected: "OK"},
-				{Expected: "1"},
+				{Expected: "(integer) 1"},
 			},
 		},
 		{
@@ -92,8 +92,8 @@ func TestIncr(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"},
-				{Expected: "2"},
+				{Expected: "(integer) 1"},
+				{Expected: "(integer) 2"},
 				{Expected: "(nil)"},
 			},
 			Delays: []time.Duration{0, 0, 0, 2 * time.Second},

@@ -22,7 +22,7 @@ func TestExpireAt(t *testing.T) {
 				{Command: "EXPIREAT", Body: []string{"non_existent_key", "1660000000"}}, // Arbitrary timestamp
 			},
 			Result: []TestCaseResult{
-				{Expected: "0"}, // Expecting 0 because the key does not exist
+				{Expected: "(integer) 0"}, // Expecting 0 because the key does not exist
 			},
 		},
 		{
@@ -34,8 +34,8 @@ func TestExpireAt(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"}, // Expecting 1 because EXPIREAT set the expiration successfully
-				{Expected: "1"}, // Key should still exist as it hasn't expired yet
+				{Expected: "(integer) 1"}, // Expecting 1 because EXPIREAT set the expiration successfully
+				{Expected: "(integer) 1"}, // Key should still exist as it hasn't expired yet
 			},
 		},
 		{
@@ -47,8 +47,8 @@ func TestExpireAt(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"}, // EXPIREAT should execute successfully
-				{Expected: "0"}, // Key should not exist as it has already expired
+				{Expected: "(integer) 1"}, // EXPIREAT should execute successfully
+				{Expected: "(integer) 0"}, // Key should not exist as it has already expired
 			},
 		},
 		{

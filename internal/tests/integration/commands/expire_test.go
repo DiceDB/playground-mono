@@ -23,7 +23,7 @@ func TestExpire(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"},
+				{Expected: "(integer) 1"},
 			},
 		},
 		{
@@ -35,8 +35,8 @@ func TestExpire(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"},
-				{Expected: "SomeValue"},
+				{Expected: "(integer) 1"},
+				{Expected: "\"SomeValue\""},
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func TestExpire(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"},
+				{Expected: "(integer) 1"},
 				{Expected: "(nil)"}, // Expecting (nil) after waiting
 			},
 		},
@@ -58,7 +58,7 @@ func TestExpire(t *testing.T) {
 				{Command: "EXPIRE", Body: []string{"non_existent_key", "1"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "0"},
+				{Expected: "(integer) 0"},
 			},
 		},
 		{
