@@ -22,7 +22,7 @@ func TestExpireTime(t *testing.T) {
 				{Command: "EXPIRETIME", Body: []string{"non_existent_key"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "-2"}, // Expecting -2 because the key does not exist
+				{Expected: "(integer) -2"}, // Expecting -2 because the key does not exist
 			},
 		},
 		{
@@ -34,8 +34,8 @@ func TestExpireTime(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "1"}, // Indicating the EXPIREAT command was successful
-				{Expected: strconv.FormatInt(time.Now().Add(30*time.Second).Unix(), 10)}, // Future timestamp in seconds
+				{Expected: "(integer) 1"}, // Indicating the EXPIREAT command was successful
+				{Expected: "(integer) " + strconv.FormatInt(time.Now().Add(30*time.Second).Unix(), 10)}, // Future timestamp in seconds
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestExpireTime(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "-1"}, // Expecting -1 because no expiration is set
+				{Expected: "(integer) -1"}, // Expecting -1 because no expiration is set
 			},
 		},
 		{

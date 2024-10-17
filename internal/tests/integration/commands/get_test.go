@@ -25,7 +25,7 @@ func TestGet(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{Expected: "v"},
+				{Expected: "\"v\""},
 				{Expected: "(nil)"},
 			},
 			Delays: []time.Duration{0, 0, 5 * time.Second},

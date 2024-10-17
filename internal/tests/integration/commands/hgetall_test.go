@@ -20,7 +20,7 @@ func TestHGetAll(t *testing.T) {
 				{Command: "HGETALL", Body: []string{"user"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: ""},
+				{Expected: "(empty list or set)"},
 			},
 		},
 		{
