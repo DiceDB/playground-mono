@@ -35,11 +35,12 @@ func (db *DiceDB) CloseDiceDB() {
 
 func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
 	diceClient := dicedb.NewClient(&dicedb.Options{
-		Addr:        configValue.DiceDB.Addr,
-		Username:    configValue.DiceDB.Username,
-		Password:    configValue.DiceDB.Password,
-		DialTimeout: 10 * time.Second,
-		MaxRetries:  10,
+		Addr:                 configValue.DiceDB.Addr,
+		Username:             configValue.DiceDB.Username,
+		Password:             configValue.DiceDB.Password,
+		DialTimeout:          10 * time.Second,
+		MaxRetries:           10,
+		EnablePrettyResponse: true,
 	})
 
 	// Ping the dicedb client to verify the connection
