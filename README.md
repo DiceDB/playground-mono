@@ -68,6 +68,6 @@ This command will pull any necessary Docker images, build the containers, and ru
 Open your browser and go to:
 
 ```bash
-http://localhost:8000/health
+http://localhost:8080/health
 ```
 This endpoint should return a status indicating that the server is up and running.
