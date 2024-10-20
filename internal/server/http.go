@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"log"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -135,5 +138,56 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
-	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "search results"})
+	q := request.URL.Query().Get("q")
+	if q == "" {
+		http.Error(w, "Missing query parameter 'q' ", http.StatusBadRequest)
+		return
+	}
+	if q == "*" {
+		q = ""
+	}
+	f, err := os.Open("https://github.com/DiceDB/playground-web/blob/master/src/data/command.ts")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var commands map[string]map[string]string
+	err = json.Unmarshal(data, &commands)
+	if err != nil {
+		log.Fatal(err)
+	}
+	matchingCommands := []map[string]string{}
+	for _, command := range commands {
+
+		title, okTitle := command["title"]
+		body, okBody := command["body"]
+		if okTitle && okBody {
+			if strings.Contains(strings.ToLower(title), q) ||
+				strings.Contains(strings.ToLower(body), q) {
+
+				highlightedText := strings.ReplaceAll(title, q, "<b>"+q+"</b>")
+
+				matchingCommands = append(matchingCommands, map[string]string{
+					"title":  highlightedText,
+					"syntax": command["syntax"],
+					"body":   body,
+					"url":    command["url"],
+				})
+			}
+		}
+	}
+	if len(matchingCommands) == 0 {
+		util.JSONResponse(w, http.StatusOK, map[string]string{"message": "No search results"})
+		return
+	}
+	response := map[string]interface{}{
+		"total":   len(matchingCommands),
+		"results": matchingCommands,
+	}
+
+	util.JSONResponse(w, http.StatusOK, response)
 }
