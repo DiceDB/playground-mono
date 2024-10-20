@@ -11,7 +11,8 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	DiceDBAddr           string
+	SysDiceDBAddr        string
+	UserDemoDiceDBAddr   string
 	ServerPort           string
 	RequestLimitPerMin   int64    // Field for the request limit
 	RequestWindowSec     float64  // Field for the time window in float64
@@ -27,12 +28,13 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		DiceDBAddr:           getEnv("DICEDB_ADDR", "localhost:7379"),                           // Default DiceDB address
+		SysDiceDBAddr:        getEnv("DICEDB_ADDR", "localhost:7379"),                           // Default DiceDB address for sys dice client
+		UserDemoDiceDBAddr:   getEnv("DICEDB_ADDR", "localhost:8379"),                           // Default DiceDB address for user demo dice client
 		ServerPort:           getEnv("SERVER_PORT", ":8080"),                                    // Default server port
 		RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                          // Default request limit
 		RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                           // Default request window in float64
 		AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}), // Default allowed origins
-		CleanupCronFrequency: getEnvInt("CLEANUP_CRON_FREQUENCY", 60*15),
+		CleanupCronFrequency: getEnvInt("CLEANUP_CRON_FREQUENCY", 60*15),                        // Default cleanup frequency for user demo dice client
 	}
 }
 

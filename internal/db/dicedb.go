@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"server/config"
 	"server/util/cmds"
 	"strings"
 	"time"
@@ -34,9 +33,9 @@ func (db *DiceDB) CloseDiceDB() {
 	}
 }
 
-func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
+func InitDiceClient(DiceDBAddr string) (*DiceDB, error) {
 	diceClient := dicedb.NewClient(&dicedb.Options{
-		Addr:        configValue.DiceDBAddr,
+		Addr:        DiceDBAddr,
 		DialTimeout: 10 * time.Second,
 		MaxRetries:  10,
 	})

@@ -55,11 +55,11 @@ func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})).ServeHTTP(w, r)
 }
 
-func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit int64, window float64) *HTTPServer {
+func NewHTTPServer(addr string, mux *http.ServeMux, userDemoClient *db.DiceDB, sysDiceClient *db.DiceDB, limit int64, window float64) *HTTPServer {
 	handlerMux := &HandlerMux{
 		mux: mux,
 		rateLimiter: func(w http.ResponseWriter, r *http.Request, next http.Handler) {
-			middleware.RateLimiter(client, next, limit, window).ServeHTTP(w, r)
+			middleware.RateLimiter(sysDiceClient, next, limit, window).ServeHTTP(w, r)
 		},
 	}
 
@@ -69,7 +69,7 @@ func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit int
 			Handler:           handlerMux,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
-		DiceClient: client,
+		DiceClient: userDemoClient,
 	}
 }
 

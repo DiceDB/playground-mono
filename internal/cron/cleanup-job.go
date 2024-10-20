@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"server/internal/db"
 	"server/util/cmds"
+	"strconv"
 	"time"
 )
 
@@ -13,7 +14,7 @@ var LastCleanUpTime int64
 
 // starts a cron job that runs at the configured frequency
 // and clean all the keys from dicedb instance
-func StartCleanupCron(ctx context.Context, client *db.DiceDB, frequency int64) {
+func StartCleanupCron(ctx context.Context, userDemoClient *db.DiceDB, sysDiceClient *db.DiceDB, frequency int64) {
 	// Convert seconds to time.Duration
 	duration := time.Duration(frequency) * time.Second
 	ticker := time.NewTicker(duration)
@@ -24,10 +25,14 @@ func StartCleanupCron(ctx context.Context, client *db.DiceDB, frequency int64) {
 		select {
 		case <-ticker.C:
 			slog.Info("Running cron job to clean up DiceDB keys")
-			if err := cleanUpKeys(client); err != nil {
+			if err := cleanUpKeys(userDemoClient); err != nil {
 				slog.Error("Failed to clean up keys", slog.Any("err", err))
 			} else {
-				LastCleanUpTime = getCurrentUnixTimestamp()
+
+				if err := setLastCleanUpTime(sysDiceClient); err != nil {
+					slog.Error("Failed inserting cleanup time", slog.Any("err", err))
+				}
+
 				slog.Info("Successfully cleaned up keys in DiceDB")
 			}
 		case <-ctx.Done():
@@ -54,6 +59,26 @@ func cleanUpKeys(client *db.DiceDB) error {
 	}
 }
 
-func getCurrentUnixTimestamp() int64 {
-	return time.Now().Unix() // Returns Unix timestamp in seconds
+func setLastCleanUpTime(client *db.DiceDB) error {
+	setCommand := &cmds.CommandRequest{
+		Cmd:  "SET",
+		Args: []string{"last-cleanup-time", getCurrentUnixTimestamp()},
+	}
+
+	setStatus, err := client.ExecuteCommand(setCommand)
+
+	if err != nil {
+		return err
+	}
+
+	if setStatus == "OK" {
+		return nil
+	} else {
+		return fmt.Errorf("inappropriate response : %v ", setStatus)
+	}
+
+}
+
+func getCurrentUnixTimestamp() string {
+	return strconv.FormatInt(time.Now().Unix(), 10) // Returns Unix timestamp in seconds
 }
