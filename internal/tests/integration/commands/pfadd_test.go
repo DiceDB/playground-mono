@@ -1,9 +1,8 @@
 package commands
 
 import (
+	"server/internal/tests/integration/commands/assertions"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPfAdd(t *testing.T) {
@@ -59,16 +58,13 @@ func TestPfAdd(t *testing.T) {
 			for i, cmd := range tc.Commands {
 				response, err := exec.FireCommand(cmd)
 				if err != nil {
-					t.Logf("error in executing command: %s - %v", cmd.Command, err)
+					t.Logf("Error in executing command: %s - %v", cmd.Command, err)
+				} else {
+					t.Logf("Response for command %s: %s", cmd.Command, response)
 				}
 
 				result := tc.Result[i]
-				if result.ErrorExpected {
-					assert.NotNil(t, err)
-					assert.Equal(t, result.Expected, err.Error())
-				} else {
-					assert.Equal(t, result.Expected, response)
-				}
+				assertions.AssertResult(t, err, response, result.Expected, result.ErrorExpected)
 			}
 		})
 	}
