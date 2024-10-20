@@ -12,10 +12,9 @@ import (
 	"os"
 	"server/config"
 	"server/util/cmds"
-	"strings"
 	"time"
 
-	dicedb "github.com/dicedb/go-dice"
+	"github.com/dicedb/dicedb-go"
 )
 
 const RespNil = "(nil)"
@@ -36,9 +35,12 @@ func (db *DiceDB) CloseDiceDB() {
 
 func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
 	diceClient := dicedb.NewClient(&dicedb.Options{
-		Addr:        configValue.DiceDBAddr,
-		DialTimeout: 10 * time.Second,
-		MaxRetries:  10,
+		Addr:                 configValue.DiceDB.Addr,
+		Username:             configValue.DiceDB.Username,
+		Password:             configValue.DiceDB.Password,
+		DialTimeout:          10 * time.Second,
+		MaxRetries:           10,
+		EnablePrettyResponse: true,
 	})
 
 	// Ping the dicedb client to verify the connection
@@ -67,7 +69,7 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("(error) %v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 
 	// Print the result based on its type
@@ -77,7 +79,7 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 	case []byte:
 		return string(v), nil
 	case []interface{}:
-		return renderListResponse(v)
+		return v, nil
 	case int64:
 		return fmt.Sprintf("%v", v), nil
 	case nil:
@@ -85,29 +87,4 @@ func (db *DiceDB) ExecuteCommand(command *cmds.CommandRequest) (interface{}, err
 	default:
 		return fmt.Sprintf("%v", v), nil
 	}
-}
-
-func renderListResponse(items []interface{}) (string, error) {
-	if len(items)%2 != 0 {
-		return "", fmt.Errorf("(error) invalid result format")
-	}
-
-	var builder strings.Builder
-	for i := 0; i < len(items); i += 2 {
-		field, ok1 := items[i].(string)
-		value, ok2 := items[i+1].(string)
-
-		// Check if both field and value are valid strings
-		if !ok1 || !ok2 {
-			return "", fmt.Errorf("(error) invalid result type")
-		}
-
-		// Append the formatted field and value
-		_, err := fmt.Fprintf(&builder, "%d) \"%s\"\n%d) \"%s\"\n", i+1, field, i+2, value)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return builder.String(), nil
 }
