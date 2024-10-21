@@ -33,15 +33,27 @@ func (db *DiceDB) CloseDiceDB() {
 	}
 }
 
-func InitDiceClient(configValue *config.Config) (*DiceDB, error) {
-	diceClient := dicedb.NewClient(&dicedb.Options{
-		Addr:                 configValue.DiceDB.Addr,
-		Username:             configValue.DiceDB.Username,
-		Password:             configValue.DiceDB.Password,
-		DialTimeout:          10 * time.Second,
-		MaxRetries:           10,
-		EnablePrettyResponse: true,
-	})
+func InitDiceClient(configValue *config.Config, isAdmin bool) (*DiceDB, error) {
+	var diceClient *dicedb.Client
+	if isAdmin {
+		diceClient = dicedb.NewClient(&dicedb.Options{
+			Addr:                 configValue.DiceDBAdmin.Addr,
+			Username:             configValue.DiceDBAdmin.Username,
+			Password:             configValue.DiceDBAdmin.Password,
+			DialTimeout:          10 * time.Second,
+			MaxRetries:           10,
+			EnablePrettyResponse: true,
+		})
+	} else {
+		diceClient = dicedb.NewClient(&dicedb.Options{
+			Addr:                 configValue.DiceDB.Addr,
+			Username:             configValue.DiceDB.Username,
+			Password:             configValue.DiceDB.Password,
+			DialTimeout:          10 * time.Second,
+			MaxRetries:           10,
+			EnablePrettyResponse: true,
+		})
+	}
 
 	// Ping the dicedb client to verify the connection
 	err := diceClient.Ping(context.Background()).Err()

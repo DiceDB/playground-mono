@@ -51,11 +51,12 @@ func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})).ServeHTTP(w, r)
 }
 
-func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit int64, window float64) *HTTPServer {
+func NewHTTPServer(addr string, mux *http.ServeMux, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
+	limit int64, window float64) *HTTPServer {
 	handlerMux := &HandlerMux{
 		mux: mux,
 		rateLimiter: func(w http.ResponseWriter, r *http.Request, next http.Handler) {
-			middleware.RateLimiter(client, next, limit, window).ServeHTTP(w, r)
+			middleware.RateLimiter(diceDBAdminClient, next, limit, window).ServeHTTP(w, r)
 		},
 	}
 
@@ -65,25 +66,35 @@ func NewHTTPServer(addr string, mux *http.ServeMux, client *db.DiceDB, limit int
 			Handler:           handlerMux,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
-		DiceClient: client,
+		DiceClient: diceClient,
 	}
 }
 
 func (s *HTTPServer) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
+	var err error
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		slog.Info("starting server at", slog.String("addr", s.httpServer.Addr))
-		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		slog.Info("starting HTTP server at", slog.String("addr", s.httpServer.Addr))
+		if err = s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("http server error: %v", slog.Any("err", err))
 		}
 	}()
 
-	<-ctx.Done()
-	slog.Info("shutting down server...")
-	return s.Shutdown()
+	wg.Add(1)
+	go func() {
+		<-ctx.Done()
+		err = s.Shutdown()
+		if err != nil {
+			slog.Error("Failed to gracefully shutdown HTTP server", slog.Any("err", err))
+			return
+		}
+	}()
+
+	wg.Wait()
+	return err
 }
 
 func (s *HTTPServer) Shutdown() error {
