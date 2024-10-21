@@ -13,14 +13,14 @@ import (
 // Config holds the application configuration
 type Config struct {
 	// Config for DiceDBAdmin instance. This instance holds internal keys
-	// and is separate from DiceDB hosting global keypool i.e. user facing.
+	// and is separate from DiceDB hosting global key pool i.e. user facing.
 	DiceDBAdmin struct {
 		Addr     string // Field for the Dice address
 		Username string // Field for the username
 		Password string // Field for the password
 	}
 	// Config for DiceDB User instance. This instance holds internal keys
-	// and is separate from DiceDB hosting global keypool i.e. user facing.
+	// and is separate from DiceDB hosting global key pool i.e. user facing.
 	DiceDB struct {
 		Addr     string // Field for the Dice address
 		Username string // Field for the username
@@ -71,11 +71,11 @@ func LoadConfig() *Config {
 			CronCleanupFrequency time.Duration
 		}{
 			Port:                 getEnv("SERVER_PORT", ":8080"),
-			IsTestEnv:            getEnvBool("IS_TEST_ENVIRONMENT", false),                             // Default server port
-			RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                             // Default request limit
-			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                              // Default request window in float64
-			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),    // Default allowed origins
-			CronCleanupFrequency: time.Duration(getEnvInt("CRON_CLEANUP_FREQUENCY", 15)) * time.Minute, // Default cron cleanup frequency
+			IsTestEnv:            getEnvBool("IS_TEST_ENVIRONMENT", false),                                  // Default server port
+			RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                                  // Default request limit
+			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                                   // Default request window in float64
+			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),         // Default allowed origins
+			CronCleanupFrequency: time.Duration(getEnvInt("CRON_CLEANUP_FREQUENCY_MINS", 15)) * time.Minute, // Default cron cleanup frequency
 		},
 	}
 }
