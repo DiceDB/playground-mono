@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"server/internal/db"
@@ -71,19 +70,15 @@ func NewHTTPServer(addr string, mux *http.ServeMux, diceDBAdminClient *db.DiceDB
 }
 
 func (s *HTTPServer) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
 	var err error
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
 		slog.Info("starting HTTP server at", slog.String("addr", s.httpServer.Addr))
 		if err = s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("http server error: %v", slog.Any("err", err))
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
 		<-ctx.Done()
 		err = s.Shutdown()
@@ -93,7 +88,6 @@ func (s *HTTPServer) Run(ctx context.Context) error {
 		}
 	}()
 
-	wg.Wait()
 	return err
 }
 

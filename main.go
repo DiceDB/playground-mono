@@ -30,13 +30,10 @@ func main() {
 	// Graceful shutdown context
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := sync.WaitGroup{}
-	wg.Add(1)
 	// Register a cleanup manager, this runs user DiceDB instance cleanup job at configured frequency
 	cleanupManager := server.NewCleanupManager(diceDBAdminClient, diceDBClient, configValue.Server.CronCleanupFrequency)
-	go func() {
-		defer wg.Done()
-		cleanupManager.Run(ctx)
-	}()
+	wg.Add(1)
+	go cleanupManager.Run(ctx, &wg)
 
 	// Create mux and register routes
 	mux := http.NewServeMux()
@@ -53,7 +50,6 @@ func main() {
 		if err := httpServer.Run(ctx); err != nil {
 			slog.Error("server failed: %v\n", slog.Any("err", err))
 			diceDBAdminClient.CloseDiceDB()
-			diceDBClient.CloseDiceDB()
 			cancel()
 		}
 	}()

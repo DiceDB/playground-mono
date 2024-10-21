@@ -28,14 +28,9 @@ func NewCleanupManager(diceDBAdminClient *db.DiceDB,
 	}
 }
 
-func (c *CleanupManager) Run(ctx context.Context) {
-	wg := sync.WaitGroup{}
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		c.start(ctx)
-	}()
+func (c *CleanupManager) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	c.start(ctx)
 }
 
 func (c *CleanupManager) start(ctx context.Context) {

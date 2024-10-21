@@ -75,7 +75,7 @@ func LoadConfig() *Config {
 			RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                             // Default request limit
 			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                              // Default request window in float64
 			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),    // Default allowed origins
-			CronCleanupFrequency: time.Duration(getEnvInt("CRON_CLEANUP_FREQUENCY", 15)) * time.Minute, // Default request limit
+			CronCleanupFrequency: time.Duration(getEnvInt("CRON_CLEANUP_FREQUENCY", 15)) * time.Minute, // Default cron cleanup frequency
 		},
 	}
 }
