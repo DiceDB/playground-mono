@@ -8,17 +8,55 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"server/config"
 	"server/internal/middleware"
 	db "server/internal/tests/dbmocks"
 	"server/util/cmds"
 	"strings"
 )
 
+// Map of blocklisted commands
+var blocklistedCommands = map[string]bool{
+	"FLUSHALL":     true,
+	"FLUSHDB":      true,
+	"DUMP":         true,
+	"ABORT":        true,
+	"AUTH":         true,
+	"CONFIG":       true,
+	"SAVE":         true,
+	"BGSAVE":       true,
+	"BGREWRITEAOF": true,
+	"RESTORE":      true,
+	"MULTI":        true,
+	"EXEC":         true,
+	"DISCARD":      true,
+	"QWATCH":       true,
+	"QUNWATCH":     true,
+	"LATENCY":      true,
+	"CLIENT":       true,
+	"SLEEP":        true,
+	"PERSIST":      true,
+}
+
+// BlockListedCommand checks if a command is blocklisted
+func BlockListedCommand(cmd string) error {
+	if _, exists := blocklistedCommands[strings.ToUpper(cmd)]; exists {
+		return errors.New("ERR unknown command '" + cmd + "'")
+	}
+	return nil
+}
+
 // ParseHTTPRequest parses an incoming HTTP request and converts it into a CommandRequest for Redis commands
 func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 	command := extractCommand(r.URL.Path)
 	if command == "" {
 		return nil, errors.New("invalid command")
+	}
+
+	configValue := config.LoadConfig()
+	// Check if the command is blocklisted
+	if err := BlockListedCommand(command); err != nil && !configValue.IsTestEnv {
+		return nil, err
 	}
 
 	args, err := newExtractor(r)
@@ -51,10 +89,6 @@ func newExtractor(r *http.Request) ([]string, error) {
 	var jsonBody []interface{}
 	if err := json.Unmarshal(bodyContent, &jsonBody); err != nil {
 		return nil, err
-	}
-
-	if len(jsonBody) == 0 {
-		return nil, fmt.Errorf("empty JSON object")
 	}
 
 	for _, val := range jsonBody {
