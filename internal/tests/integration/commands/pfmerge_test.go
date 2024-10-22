@@ -61,7 +61,7 @@ func TestPfMerge(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{ErrorExpected: true, Expected: "(error) WRONGTYPE Key is not a valid HyperLogLog string value."},
+				{ErrorExpected: true, Expected: "(error) WRONGTYPE Key is not a valid HyperLogLog string value"},
 			},
 		},
 	}

@@ -110,11 +110,11 @@ func TestIncr(t *testing.T) {
 			},
 			Result: []TestCaseResult{
 				{Expected: "OK"},
-				{ErrorExpected: true, Expected: "(error) ERR WRONGTYPE Operation against a key holding the wrong kind of value"},
+				{ErrorExpected: true, Expected: "(error) ERR value is not an integer or out of range"},
 				{Expected: "OK"},
-				{ErrorExpected: true, Expected: "(error) ERR WRONGTYPE Operation against a key holding the wrong kind of value"},
+				{ErrorExpected: true, Expected: "(error) ERR value is not an integer or out of range"},
 				{Expected: "OK"},
-				{ErrorExpected: true, Expected: "(error) ERR WRONGTYPE Operation against a key holding the wrong kind of value"},
+				{ErrorExpected: true, Expected: "(error) ERR value is not an integer or out of range"},
 			},
 		},
 	}
