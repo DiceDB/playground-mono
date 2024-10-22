@@ -1,5 +1,5 @@
 services:
-  dicedb:
+  dicedbadmin:
     image: dicedb/dicedb:latest
     ports:
       - "7379:7379"
@@ -11,15 +11,31 @@ services:
     networks:
      - dice-network
 
+  dicedb:
+    image: dicedb/dicedb:latest
+    ports:
+      - "7380:7379"
+    healthcheck:
+      test: [ "CMD", "PING" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - dice-network
+
   backend:
     build:
       context: .
     ports:
       - "8080:8080"
     depends_on:
+      - dicedbadmin
       - dicedb
     environment:
-      - DICEDB_ADDR=localhost:7379
+      - DICEDB_ADMIN_ADDR=localhost:7379
+      - DICEDB_ADMIN_USERNAME=${DICEDB_ADMIN_USERNAME}
+      - DICEDB_ADMIN_PASSWORD=${DICEDB_ADMIN_PASSWORD}
+      - DICEDB_ADDR=localhost:7380
       - DICEDB_USERNAME=${DICEDB_USERNAME}
       - DICEDB_PASSWORD=${DICEDB_PASSWORD}
     networks:

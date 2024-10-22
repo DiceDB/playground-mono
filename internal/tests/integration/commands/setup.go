@@ -41,7 +41,7 @@ type TestCase struct {
 
 func NewHTTPCommandExecutor() (*HTTPCommandExecutor, error) {
 	configValue := config.LoadConfig()
-	diceClient, err := db.InitDiceClient(configValue)
+	diceClient, err := db.InitDiceClient(configValue, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize DiceDB client: %v", err)
 	}
