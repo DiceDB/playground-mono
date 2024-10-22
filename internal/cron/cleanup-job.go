@@ -10,10 +10,8 @@ import (
 	"time"
 )
 
-var LastCleanUpTime int64
-
 // starts a cron job that runs at the configured frequency
-// and clean all the keys from dicedb instance
+// and clean all the keys from use demo dicedb instance
 func StartCleanupCron(ctx context.Context, userDemoClient *db.DiceDB, sysDiceClient *db.DiceDB, frequency int64) {
 	// Convert seconds to time.Duration
 	duration := time.Duration(frequency) * time.Second
