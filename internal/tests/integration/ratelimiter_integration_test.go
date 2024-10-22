@@ -11,9 +11,8 @@ import (
 )
 
 func TestRateLimiterWithinLimit(t *testing.T) {
-	configValue := config.LoadConfig()
-	limit := configValue.Server.RequestLimitPerMin
-	window := configValue.Server.RequestWindowSec
+	limit := config.AppConfig.Server.RequestLimitPerMin
+	window := config.AppConfig.Server.RequestWindowSec
 
 	w, r, rateLimiter := util.SetupRateLimiter(limit, window)
 
@@ -24,9 +23,8 @@ func TestRateLimiterWithinLimit(t *testing.T) {
 }
 
 func TestRateLimiterExceedsLimit(t *testing.T) {
-	configValue := config.LoadConfig()
-	limit := configValue.Server.RequestLimitPerMin
-	window := configValue.Server.RequestWindowSec
+	limit := config.AppConfig.Server.RequestLimitPerMin
+	window := config.AppConfig.Server.RequestWindowSec
 
 	w, r, rateLimiter := util.SetupRateLimiter(limit, window)
 
@@ -42,9 +40,8 @@ func TestRateLimiterExceedsLimit(t *testing.T) {
 }
 
 func TestRateLimitHeadersSet(t *testing.T) {
-	configValue := config.LoadConfig()
-	limit := configValue.Server.RequestLimitPerMin
-	window := configValue.Server.RequestWindowSec
+	limit := config.AppConfig.Server.RequestLimitPerMin
+	window := config.AppConfig.Server.RequestWindowSec
 
 	w, r, rateLimiter := util.SetupRateLimiter(limit, window)
 

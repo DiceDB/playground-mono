@@ -7,8 +7,7 @@ import (
 
 // Updated enableCors function to return a boolean indicating if OPTIONS was handled
 func handleCors(w http.ResponseWriter, r *http.Request) bool {
-	configValue := config.LoadConfig()
-	allAllowedOrigins := configValue.Server.AllowedOrigins
+	allAllowedOrigins := config.AppConfig.Server.AllowedOrigins
 	origin := r.Header.Get("Origin")
 	allowed := false
 

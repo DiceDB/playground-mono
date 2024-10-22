@@ -36,23 +36,10 @@ type Config struct {
 	}
 }
 
-// LoadConfig loads the application configuration from environment variables or defaults
-func LoadConfig() *Config {
-	err := godotenv.Load()
-	if err != nil {
-		slog.Debug("Warning: .env file not found, falling back to system environment variables.")
-	}
+var AppConfig *Config
 
-	return &Config{
-		DiceDBAdmin: struct {
-			Addr     string
-			Username string
-			Password string
-		}{
-			Addr:     getEnv("DICEDB_ADMIN_ADDR", "localhost:7379"), // Default DiceDB Admin address
-			Username: getEnv("DICEDB_ADMIN_USERNAME", "diceadmin"),  // Default DiceDB Admin username
-			Password: getEnv("DICEDB_ADMIN_PASSWORD", ""),           // Default DiceDB Admin password
-		},
+func init() {
+	AppConfig = &Config{
 		DiceDB: struct {
 			Addr     string
 			Username string
