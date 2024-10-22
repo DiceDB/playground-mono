@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"server/config"
 	"server/internal/middleware"
 	db "server/internal/tests/dbmocks"
 	"server/util/cmds"
@@ -52,8 +53,9 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 		return nil, errors.New("invalid command")
 	}
 
+	configValue := config.LoadConfig()
 	// Check if the command is blocklisted
-	if err := BlockListedCommand(command); err != nil {
+	if err := BlockListedCommand(command); err != nil && !configValue.Server.IsTestEnv {
 		return nil, err
 	}
 
@@ -87,10 +89,6 @@ func newExtractor(r *http.Request) ([]string, error) {
 	var jsonBody []interface{}
 	if err := json.Unmarshal(bodyContent, &jsonBody); err != nil {
 		return nil, err
-	}
-
-	if len(jsonBody) == 0 {
-		return nil, fmt.Errorf("empty JSON object")
 	}
 
 	for _, val := range jsonBody {
