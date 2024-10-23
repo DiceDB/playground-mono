@@ -1,9 +1,8 @@
 package commands
 
 import (
+	"server/internal/tests/integration/commands/assertions"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestHGet(t *testing.T) {
@@ -31,8 +30,8 @@ func TestHGet(t *testing.T) {
 				{Command: "HGET", Body: []string{"user", "name"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "2"},
-				{Expected: "John Doe"},
+				{Expected: "(integer) 2"},
+				{Expected: "\"John Doe\""},
 			},
 		},
 		{
@@ -42,7 +41,7 @@ func TestHGet(t *testing.T) {
 				{Command: "HGET", Body: []string{"user1", "gender"}},
 			},
 			Result: []TestCaseResult{
-				{Expected: "2"},
+				{Expected: "(integer) 2"},
 				{Expected: "(nil)"},
 			},
 		},
@@ -73,16 +72,14 @@ func TestHGet(t *testing.T) {
 			for i, cmd := range tc.Commands {
 				response, err := exec.FireCommand(cmd)
 				if err != nil {
-					t.Logf("error in executing command: %s - %v", cmd.Command, err)
+					t.Logf("Error executing command: %s - %v", cmd.Command, err)
+				} else {
+					t.Logf("Response for command %s: %s", cmd.Command, response)
 				}
 
 				result := tc.Result[i]
-				if result.ErrorExpected {
-					assert.NotNil(t, err)
-					assert.Equal(t, result.Expected, err.Error())
-				} else {
-					assert.Equal(t, result.Expected, response)
-				}
+				assertions.AssertResult(t, err, response, result.Expected, result.ErrorExpected)
+
 			}
 		})
 	}

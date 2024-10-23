@@ -16,8 +16,9 @@ func InitializeDiceDBContainer(ctx context.Context) (*DiceDBContainer, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "dicedb/dicedb:latest",
 		ExposedPorts: []string{"7379/tcp"},
-		WaitingFor:   wait.ForLog("HTTP Server running"),
+		WaitingFor:   wait.ForLog("starting DiceDB"),
 	}
+
 	diceDBContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
