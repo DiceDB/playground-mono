@@ -1,136 +1,144 @@
-package config
+package server
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"log/slog"
-	"os"
-	"strconv"
+	"net/http"
 	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
+	"server/internal/db"
+	"server/internal/middleware"
+	util "server/util"
 )
 
-// Config holds the application configuration
-type Config struct {
-	// Config for DiceDBAdmin instance. This instance holds internal keys
-	// and is separate from DiceDB hosting global key pool i.e. user facing.
-	DiceDBAdmin struct {
-		Addr     string // Field for the Dice address
-		Username string // Field for the username
-		Password string // Field for the password
-	}
-	// Config for DiceDB User instance. This instance holds internal keys
-	// and is separate from DiceDB hosting global key pool i.e. user facing.
-	DiceDB struct {
-		Addr     string // Field for the Dice address
-		Username string // Field for the username
-		Password string // Field for the password
-	}
-	Server struct {
-		Port                 string // Field for the server port
-		IsTestEnv            bool
-		RequestLimitPerMin   int64         // Field for the request limit
-		RequestWindowSec     float64       // Field for the time window in float64
-		AllowedOrigins       []string      // Field for the allowed origins
-		CronCleanupFrequency time.Duration // Field for configuring key cleanup cron
-	}
+type HTTPServer struct {
+	httpServer *http.Server
+	DiceClient *db.DiceDB
 }
 
-// LoadConfig loads the application configuration from environment variables or defaults
-func LoadConfig() *Config {
-	err := godotenv.Load()
+type HandlerMux struct {
+	mux         *http.ServeMux
+	rateLimiter func(http.ResponseWriter, *http.Request, http.Handler)
+}
+
+type HTTPResponse struct {
+	Data interface{} `json:"data"`
+}
+
+type HTTPErrorResponse struct {
+	Error interface{} `json:"error"`
+}
+
+func errorResponse(response string) string {
+	errorMessage := map[string]string{"error": response}
+	jsonResponse, err := json.Marshal(errorMessage)
 	if err != nil {
-		slog.Debug("Warning: .env file not found, falling back to system environment variables.")
+		slog.Error("Error marshaling response: %v", slog.Any("err", err))
+		return `{"error": "internal server error"}`
 	}
 
-	return &Config{
-		DiceDBAdmin: struct {
-			Addr     string
-			Username string
-			Password string
-		}{
-			Addr:     getEnv("DICEDB_ADMIN_ADDR", "localhost:7379"), // Default DiceDB Admin address
-			Username: getEnv("DICEDB_ADMIN_USERNAME", "diceadmin"),  // Default DiceDB Admin username
-			Password: getEnv("DICEDB_ADMIN_PASSWORD", ""),           // Default DiceDB Admin password
-		},
-		DiceDB: struct {
-			Addr     string
-			Username string
-			Password string
-		}{
-			Addr:     getEnv("DICEDB_ADDR", "localhost:7380"), // Default DiceDB address
-			Username: getEnv("DICEDB_USERNAME", "dice"),       // Default username
-			Password: getEnv("DICEDB_PASSWORD", ""),           // Default password
-		},
-		Server: struct {
-			Port                 string
-			IsTestEnv            bool
-			RequestLimitPerMin   int64
-			RequestWindowSec     float64
-			AllowedOrigins       []string
-			CronCleanupFrequency time.Duration
-		}{
-			Port:                 getEnv("SERVER_PORT", ":8080"),
-			IsTestEnv:            getEnvBool("IS_TEST_ENVIRONMENT", false),                                  // Default server port
-			RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                                  // Default request limit
-			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                                   // Default request window in float64
-			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),         // Default allowed origins
-			CronCleanupFrequency: time.Duration(getEnvInt("CRON_CLEANUP_FREQUENCY_MINS", 15)) * time.Minute, // Default cron cleanup frequency
+	return string(jsonResponse)
+}
+
+func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	middleware.TrailingSlashMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.URL.Path = strings.ToLower(r.URL.Path)
+		cim.rateLimiter(w, r, cim.mux)
+	})).ServeHTTP(w, r)
+}
+
+func NewHTTPServer(addr string, mux *http.ServeMux, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
+	limit int64, window float64) *HTTPServer {
+	handlerMux := &HandlerMux{
+		mux: mux,
+		rateLimiter: func(w http.ResponseWriter, r *http.Request, next http.Handler) {
+			middleware.RateLimiter(diceDBAdminClient, next, limit, window).ServeHTTP(w, r)
 		},
 	}
-}
 
-// getEnv retrieves an environment variable or returns a default value
-func getEnv(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
+	return &HTTPServer{
+		httpServer: &http.Server{
+			Addr:              addr,
+			Handler:           handlerMux,
+			ReadHeaderTimeout: 5 * time.Second,
+		},
+		DiceClient: diceClient,
 	}
-	return fallback
 }
 
-// getEnvInt retrieves an environment variable as an integer or returns a default value
-func getEnvInt(key string, fallback int) int64 {
-	if value, exists := os.LookupEnv(key); exists {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return int64(intValue)
+func (s *HTTPServer) Run(ctx context.Context) error {
+	var err error
+
+	go func() {
+		slog.Info("starting HTTP server at", slog.String("addr", s.httpServer.Addr))
+		if err = s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("http server error: %v", slog.Any("err", err))
 		}
-	}
-	return int64(fallback)
-}
+	}()
 
-// added for miliseconds request window controls
-func getEnvFloat64(key string, fallback float64) float64 {
-	if value, exists := os.LookupEnv(key); exists {
-		if floatValue, err := strconv.ParseFloat(value, 64); err == nil {
-			return floatValue
+	go func() {
+		<-ctx.Done()
+		err = s.Shutdown()
+		if err != nil {
+			slog.Error("Failed to gracefully shutdown HTTP server", slog.Any("err", err))
+			return
 		}
-	}
-	return fallback
+	}()
+
+	return err
 }
 
-func getEnvArray(key string, fallback []string) []string {
-	if value, exists := os.LookupEnv(key); exists {
-		if arrayValue := splitString(value); len(arrayValue) > 0 {
-			return arrayValue
-		}
+func (s *HTTPServer) Shutdown() error {
+	if err := s.DiceClient.Client.Close(); err != nil {
+		slog.Error("failed to close dicedb client: %v", slog.Any("err", err))
 	}
-	return fallback
+
+	return s.httpServer.Shutdown(context.Background())
 }
 
-func getEnvBool(key string, fallback bool) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
-		}
-	}
-	return fallback
+func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
+	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "server is running"})
 }
 
-// splitString splits a string by comma and returns a slice of strings
-func splitString(s string) []string {
-	var array []string
-	for _, v := range strings.Split(s, ",") {
-		array = append(array, strings.TrimSpace(v))
+func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
+	diceCmd, err := util.ParseHTTPRequest(r)
+	if err != nil {
+		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
+		return
 	}
-	return array
+
+	resp, err := s.DiceClient.ExecuteCommand(diceCmd)
+	if err != nil {
+		slog.Error("error: failure in executing command", "error", slog.Any("err", err))
+		http.Error(w, errorResponse(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	respStr, ok := resp.(string)
+	if !ok {
+		slog.Error("error: response is not a string", "error", slog.Any("err", err))
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
+		return
+	}
+
+	httpResponse := HTTPResponse{Data: respStr}
+	responseJSON, err := json.Marshal(httpResponse)
+	if err != nil {
+		slog.Error("error marshaling response to json", "error", slog.Any("err", err))
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = w.Write(responseJSON)
+	if err != nil {
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
+	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "search results"})
 }
