@@ -80,29 +80,10 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 			}
 		}
 
-		// Get the cron last cleanup run time
-		var lastCronCleanupTime int64
-		resp := client.Client.Get(ctx, utils.LastCronCleanupTimeUnixMs)
-		if resp.Err() != nil && !errors.Is(resp.Err(), dicedb.Nil) {
-			slog.Error("Failed to get last cron cleanup time for headers", slog.Any("err", resp.Err().Error()))
+		secondsDifference, err := calculateNextCleanupTime(client, ctx, cronFrequencyInterval)
+		if err != nil {
+			slog.Error("Error calculating next cleanup time", "error", err)
 		}
-
-		if resp.Val() != "" {
-			lastCronCleanupTime, err = strconv.ParseInt(resp.Val(), 10, 64)
-			if err != nil {
-				slog.Error("Error converting last cron cleanup time", "error", err)
-			}
-		}
-
-		lastCleanupTime := time.UnixMilli(lastCronCleanupTime)
-
-		// Calculate next cleanup time
-		nextCleanupTime := lastCleanupTime.Add(cronFrequencyInterval)
-
-		// Get the difference from the current time
-		timeDifference := nextCleanupTime.Sub(time.Now())
-
-		secondsDifference := int64(timeDifference.Seconds())
 
 		addRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window),
 			secondsDifference)
@@ -110,6 +91,26 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 		slog.Info("Request processed", "count", requestCount+1)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func calculateNextCleanupTime(client *db.DiceDB, ctx context.Context, cronFrequencyInterval time.Duration) (int64, error) {
+	var lastCronCleanupTime int64
+	resp := client.Client.Get(ctx, utils.LastCronCleanupTimeUnixMs)
+	if resp.Err() != nil && !errors.Is(resp.Err(), dicedb.Nil) {
+		return 0, resp.Err()
+	}
+
+	if resp.Val() != "" {
+		lastCronCleanupTime, err := strconv.ParseInt(resp.Val(), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	lastCleanupTime := time.UnixMilli(lastCronCleanupTime)
+	nextCleanupTime := lastCleanupTime.Add(cronFrequencyInterval)
+	timeDifference := nextCleanupTime.Sub(time.Now())
+	return int64(timeDifference.Seconds()), nil
 }
 
 func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
