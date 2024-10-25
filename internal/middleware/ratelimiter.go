@@ -12,12 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"server/config"
 	"github.com/dicedb/dicedb-go"
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
 func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float64) http.Handler {
+	configValue := config.LoadConfig()
+	cronFrequencyInterval := configValue.Server.CronCleanupFrequency
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if handleCors(w, r) {
 			return
@@ -92,8 +94,18 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 			}
 		}
 
+		lastCleanupTime := time.UnixMilli(lastCronCleanupTime)
+
+		// Calculate next cleanup time
+		nextCleanupTime := lastCleanupTime.Add(cronFrequencyInterval)
+
+		// Get the difference from the current time
+		timeDifference := nextCleanupTime.Sub(time.Now())
+
+		secondsDifference := int64(timeDifference.Seconds())
+
 		addRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window),
-			lastCronCleanupTime)
+			secondsDifference)
 
 		slog.Info("Request processed", "count", requestCount+1)
 		next.ServeHTTP(w, r)
@@ -170,12 +182,12 @@ func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, wi
 	})
 }
 
-func addRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTime, cronLastCleanupTime int64) {
+func addRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTime, secondsLeftForCleanup int64) {
 	w.Header().Set("x-ratelimit-limit", strconv.FormatInt(limit, 10))
 	w.Header().Set("x-ratelimit-remaining", strconv.FormatInt(remaining, 10))
 	w.Header().Set("x-ratelimit-used", strconv.FormatInt(used, 10))
 	w.Header().Set("x-ratelimit-reset", strconv.FormatInt(resetTime, 10))
-	w.Header().Set("x-last-cleanup-time", strconv.FormatInt(cronLastCleanupTime, 10))
+	w.Header().Set("x-next-cleanup-time", strconv.FormatInt(secondsLeftForCleanup, 10))
 
 	// Expose the rate limit headers to the client
 	w.Header().Set("Access-Control-Expose-Headers", "x-ratelimit-limit, x-ratelimit-remaining,"+
