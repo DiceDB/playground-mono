@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/dicedb/dicedb-go"
 	"log/slog"
 	"net/http"
+	"server/config"
 	"server/internal/db"
 	"server/internal/server/utils"
 	mock "server/internal/tests/dbmocks"
 	"strconv"
 	"strings"
 	"time"
-	"server/config"
-	"github.com/dicedb/dicedb-go"
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
