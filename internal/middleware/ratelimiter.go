@@ -98,14 +98,14 @@ func calculateNextCleanupTime(ctx context.Context, client *db.DiceDB, cronFreque
 	var lastCronCleanupTime int64
 	resp := client.Client.Get(ctx, utils.LastCronCleanupTimeUnixMs)
 	if resp.Err() != nil && !errors.Is(resp.Err(), dicedb.Nil) {
-		return 0, resp.Err()
+		return -1, resp.Err()
 	}
 
 	if resp.Val() != "" {
 		var err error
 		lastCronCleanupTime, err = strconv.ParseInt(resp.Val(), 10, 64) // directly assign here
 		if err != nil {
-			return 0, err
+			return -1, err
 		}
 	}
 
