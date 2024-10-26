@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dicedb/dicedb-go"
 	"log/slog"
 	"net/http"
 	"server/config"
@@ -14,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/dicedb/dicedb-go"
 )
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
@@ -80,7 +81,7 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 			}
 		}
 
-		secondsDifference, err := calculateNextCleanupTime(client, ctx, cronFrequencyInterval)
+		secondsDifference, err := calculateNextCleanupTime(ctx, client, cronFrequencyInterval)
 		if err != nil {
 			slog.Error("Error calculating next cleanup time", "error", err)
 		}
@@ -93,7 +94,7 @@ func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float
 	})
 }
 
-func calculateNextCleanupTime(client *db.DiceDB, ctx context.Context, cronFrequencyInterval time.Duration) (int64, error) {
+func calculateNextCleanupTime(ctx context.Context, client *db.DiceDB, cronFrequencyInterval time.Duration) (int64, error) {
 	var lastCronCleanupTime int64
 	resp := client.Client.Get(ctx, utils.LastCronCleanupTimeUnixMs)
 	if resp.Err() != nil && !errors.Is(resp.Err(), dicedb.Nil) {
@@ -113,7 +114,6 @@ func calculateNextCleanupTime(client *db.DiceDB, ctx context.Context, cronFreque
 	timeDifference := nextCleanupTime.Sub(time.Now())
 	return int64(timeDifference.Seconds()), nil
 }
-
 
 func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
