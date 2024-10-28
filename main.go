@@ -7,6 +7,7 @@ import (
 	"os"
 	"server/config"
 	"server/internal/db"
+	"server/internal/logger"
 	"server/internal/server"
 	"sync"
 
@@ -14,6 +15,7 @@ import (
 )
 
 func main() {
+	slog.SetDefault(logger.New())
 	diceDBAdminClient, err := db.InitDiceClient(config.AppConfig, true)
 	if err != nil {
 		slog.Error("Failed to initialize DiceDB Admin client: %v", slog.Any("err", err))
