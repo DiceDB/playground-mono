@@ -6,12 +6,16 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"server/internal/db"
 	"server/internal/middleware"
+	"server/internal/server/utils"
 	util "server/util"
+
+	"github.com/dicedb/dicedb-go"
 )
 
 type HTTPServer struct {
@@ -100,6 +104,22 @@ func (s *HTTPServer) Shutdown() error {
 }
 
 func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
+	nextCleanup, err := s.getNextCleanupTime()
+	if err != nil {
+		slog.Error("Failed to get the cleanupTime", slog.Any("err", err))
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
+		return
+	}
+
+	commandsLeft, err := s.getCommandsLeft()
+	if err != nil {
+		slog.Error("Failed to get the commands Left", slog.Any("err", err))
+		http.Error(w, errorResponse("internal server error"), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("x-next-cleanup-time", strconv.FormatInt(nextCleanup, 10))
+	w.Header().Set("x-commands-left", strconv.FormatInt(commandsLeft, 10))
 	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "server is running"})
 }
 
@@ -141,4 +161,33 @@ func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) SearchHandler(w http.ResponseWriter, request *http.Request) {
 	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "search results"})
+}
+
+func (s *HTTPServer) getNextCleanupTime() (int64, error) {
+	resp := s.DiceClient.Client.Get(context.Background(), utils.LastCronCleanupTimeUnixMs)
+	if resp.Err() != nil {
+		if errors.Is(resp.Err(), dicedb.Nil) {
+			return time.Now().UnixMilli(), nil
+		}
+		return 0, resp.Err()
+	}
+
+	lastCleanupStr := resp.Val()
+	if lastCleanupStr == "" {
+		return 0, resp.Err()
+	}
+
+	lastCleanup, err := strconv.ParseInt(lastCleanupStr, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	lastCleanupTime := time.UnixMilli(lastCleanup)
+	nextCleanupTime := lastCleanupTime.Add(15 * time.Minute).UnixMilli()
+
+	return nextCleanupTime, nil
+}
+
+func (s *HTTPServer) getCommandsLeft() (int64, error) {
+	// clarification required
+	return 1, nil
 }

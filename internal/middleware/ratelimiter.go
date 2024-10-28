@@ -111,8 +111,7 @@ func calculateNextCleanupTime(ctx context.Context, client *db.DiceDB, cronFreque
 
 	lastCleanupTime := time.UnixMilli(lastCronCleanupTime)
 	nextCleanupTime := lastCleanupTime.Add(cronFrequencyInterval)
-	timeDifference := nextCleanupTime.Sub(time.Now())
-	return int64(timeDifference.Seconds()), nil
+	return int64(time.Until(nextCleanupTime).Seconds()), nil
 }
 
 func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
