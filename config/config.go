@@ -34,11 +34,18 @@ type Config struct {
 		AllowedOrigins       []string      // Field for the allowed origins
 		CronCleanupFrequency time.Duration // Field for configuring key cleanup cron
 	}
+	Logging struct {
+		Level string
+	}
 }
 
 var AppConfig *Config
 
 func init() {
+	err := godotenv.Load()
+	if err != nil {
+		slog.Debug("Warning: .env file not found, falling back to system environment variables.")
+	}
 	AppConfig = &Config{
 		DiceDB: struct {
 			Addr     string
@@ -63,6 +70,11 @@ func init() {
 			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                                   // Default request window in float64
 			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),         // Default allowed origins
 			CronCleanupFrequency: time.Duration(getEnvInt("CRON_CLEANUP_FREQUENCY_MINS", 15)) * time.Minute, // Default cron cleanup frequency
+		},
+		Logging: struct {
+			Level string
+		}{
+			Level: getEnv("LOGGING_LEVEL", "info"),
 		},
 	}
 }
