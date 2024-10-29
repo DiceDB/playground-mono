@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"server/config"
 	"server/internal/db"
 	"server/internal/middleware"
 	"server/internal/server/utils"
@@ -188,6 +190,26 @@ func (s *HTTPServer) getNextCleanupTime() (int64, error) {
 }
 
 func (s *HTTPServer) getCommandsLeft() (int64, error) {
-	// clarification required
-	return 1, nil
+	configValue := config.LoadConfig()
+	currentWindow := time.Now().Unix() / int64(configValue.Server.RequestWindowSec)
+	key := fmt.Sprintf("request_count:%d", currentWindow)
+
+	val, err := s.DiceClient.Client.Get(context.Background(), key).Result()
+	if err != nil {
+		if errors.Is(err, dicedb.Nil) {
+			return 1000, nil
+		}
+		return 0, err
+	}
+
+	requestCount, err := strconv.ParseInt(val, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	remaining := int64(1000) - requestCount
+	if remaining < 0 {
+		remaining = 0
+	}
+	return remaining, nil
 }
