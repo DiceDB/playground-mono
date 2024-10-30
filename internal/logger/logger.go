@@ -27,8 +27,9 @@ func (h *CustomLogHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= h.level
 }
 
+//nolint:gocritic // The slog.Record struct triggers hugeParam, but we don't control the interface (it's a standard library one)
 func (h *CustomLogHandler) Handle(_ context.Context, record slog.Record) error {
-	if !h.Enabled(nil, record.Level) {
+	if !h.Enabled(context.TODO(), record.Level) {
 		return nil
 	}
 
