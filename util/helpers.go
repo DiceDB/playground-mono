@@ -53,9 +53,8 @@ func ParseHTTPRequest(r *http.Request) (*cmds.CommandRequest, error) {
 		return nil, errors.New("invalid command")
 	}
 
-	configValue := config.LoadConfig()
 	// Check if the command is blocklisted
-	if err := BlockListedCommand(command); err != nil && !configValue.Server.IsTestEnv {
+	if err := BlockListedCommand(command); err != nil && !config.AppConfig.Server.IsTestEnv {
 		return nil, err
 	}
 
