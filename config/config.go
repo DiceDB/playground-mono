@@ -28,7 +28,7 @@ type Config struct {
 	}
 	Server struct {
 		Port                 string // Field for the server port
-		IsTestEnv            bool
+		Environment          string
 		RequestLimitPerMin   int64         // Field for the request limit
 		RequestWindowSec     float64       // Field for the time window in float64
 		AllowedOrigins       []string      // Field for the allowed origins
@@ -64,14 +64,14 @@ func LoadConfig() *Config {
 		},
 		Server: struct {
 			Port                 string
-			IsTestEnv            bool
+			Environment          string
 			RequestLimitPerMin   int64
 			RequestWindowSec     float64
 			AllowedOrigins       []string
 			CronCleanupFrequency time.Duration
 		}{
 			Port:                 getEnv("PORT", ":8080"),
-			IsTestEnv:            getEnv("ENVIRONMENT", "local") != "production",                            // Default server port
+			Environment:          getEnv("ENVIRONMENT", "local"),
 			RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                                  // Default request limit
 			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                                   // Default request window in float64
 			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),         // Default allowed origins
