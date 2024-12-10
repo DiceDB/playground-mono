@@ -49,9 +49,9 @@ func LoadConfig() *Config {
 			Username string
 			Password string
 		}{
-			Addr:     getEnv("DICEDB_ADMIN_ADDR", "localhost:7379"), // Default DiceDB Admin address
-			Username: getEnv("DICEDB_ADMIN_USERNAME", "diceadmin"),  // Default DiceDB Admin username
-			Password: getEnv("DICEDB_ADMIN_PASSWORD", ""),           // Default DiceDB Admin password
+			Addr:     getEnv("DICEDB_METADATA_ADDR", "localhost:7379"), // Default DiceDB Admin address
+			Username: getEnv("DICEDB_METADATA_USERNAME", "diceadmin"),  // Default DiceDB Admin username
+			Password: getEnv("DICEDB_METADATA_PASSWORD", ""),           // Default DiceDB Admin password
 		},
 		DiceDB: struct {
 			Addr     string
