@@ -71,3 +71,9 @@ Open your browser and go to:
 http://localhost:8080/health
 ```
 This endpoint should return a status indicating that the server is up and running.
+
+## Setting up Production Instance
+
+```
+bash setup.sh
+```
