@@ -12,6 +12,8 @@ import (
 	"server/internal/db"
 	"server/internal/middleware"
 	util "server/util"
+
+	"github.com/gin-gonic/gin"
 )
 
 type HTTPServer struct {
@@ -50,19 +52,13 @@ func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})).ServeHTTP(w, r)
 }
 
-func NewHTTPServer(addr string, mux *http.ServeMux, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
+func NewHTTPServer(router *gin.Engine, mux *http.ServeMux, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
 	limit int64, window float64) *HTTPServer {
-	handlerMux := &HandlerMux{
-		mux: mux,
-		rateLimiter: func(w http.ResponseWriter, r *http.Request, next http.Handler) {
-			middleware.RateLimiter(diceDBAdminClient, next, limit, window).ServeHTTP(w, r)
-		},
-	}
 
 	return &HTTPServer{
 		httpServer: &http.Server{
-			Addr:              addr,
-			Handler:           handlerMux,
+			Addr:              ":8080",
+			Handler:           router,
 			ReadHeaderTimeout: 5 * time.Second,
 		},
 		DiceClient: diceClient,

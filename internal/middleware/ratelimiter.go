@@ -15,83 +15,100 @@ import (
 	"time"
 
 	"github.com/dicedb/dicedb-go"
+	"github.com/gin-gonic/gin"
 )
 
+type (
+	RateLimiterMiddleware struct {
+		client                *db.DiceDB
+		limit                 int64
+		window                float64
+		conf                  *config.Config
+		cronFrequencyInterval time.Duration
+	}
+)
+
+func NewRateLimiterMiddleware(client *db.DiceDB, limit int64, window float64) (rl *RateLimiterMiddleware) {
+	rl = &RateLimiterMiddleware{
+		client:                client,
+		limit:                 limit,
+		window:                window,
+		cronFrequencyInterval: config.LoadConfig().Server.CronCleanupFrequency,
+	}
+	return
+}
+
 // RateLimiter middleware to limit requests based on a specified limit and duration
-func RateLimiter(client *db.DiceDB, next http.Handler, limit int64, window float64) http.Handler {
-	configValue := config.LoadConfig()
-	cronFrequencyInterval := configValue.Server.CronCleanupFrequency
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if handleCors(w, r) {
-			return
-		}
+func (rl *RateLimiterMiddleware) Exec(c *gin.Context) {
+	if handleCors(c.Writer, c.Request) {
+		return
+	}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-		// Only apply rate limiting for specific paths (e.g., "/cli/")
-		if !strings.Contains(r.URL.Path, "/shell/exec/") {
-			next.ServeHTTP(w, r)
-			return
-		}
+	// Only apply rate limiting for specific paths (e.g., "/cli/")
+	if !strings.Contains(c.Request.URL.Path, "/shell/exec/") {
+		c.Next()
+		return
+	}
 
-		// Generate the rate limiting key based on the current window
-		currentWindow := time.Now().Unix() / int64(window)
-		key := fmt.Sprintf("request_count:%d", currentWindow)
-		slog.Debug("Created rate limiter key", slog.Any("key", key))
+	// Generate the rate limiting key based on the current window
+	currentWindow := time.Now().Unix() / int64(rl.window)
+	key := fmt.Sprintf("request_count:%d", currentWindow)
+	slog.Debug("Created rate limiter key", slog.Any("key", key))
 
-		// Get the current request count for this window
-		val, err := client.Client.Get(ctx, key).Result()
-		if err != nil && !errors.Is(err, dicedb.Nil) {
-			slog.Error("Error fetching request count", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
+	// Get the current request count for this window
+	val, err := rl.client.Client.Get(ctx, key).Result()
+	if err != nil && !errors.Is(err, dicedb.Nil) {
+		slog.Error("Error fetching request count", "error", err)
+		http.Error(c.Writer, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 
-		// Parse the current request count or initialize to 0
-		var requestCount int64 = 0
-		if val != "" {
-			requestCount, err = strconv.ParseInt(val, 10, 64)
-			if err != nil {
-				slog.Error("Error converting request count", "error", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-		}
-
-		// Check if the request count exceeds the limit
-		if requestCount >= limit {
-			slog.Warn("Request limit exceeded", "count", requestCount)
-			addRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window), 0)
-			http.Error(w, "429 - Too Many Requests", http.StatusTooManyRequests)
-			return
-		}
-
-		// Increment the request count
-		if requestCount, err = client.Client.Incr(ctx, key).Result(); err != nil {
-			slog.Error("Error incrementing request count", "error", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		// Set the key expiry if it's newly created
-		if requestCount == 1 {
-			if err := client.Client.Expire(ctx, key, time.Duration(window)*time.Second).Err(); err != nil {
-				slog.Error("Error setting expiry for request count", "error", err)
-			}
-		}
-
-		secondsDifference, err := calculateNextCleanupTime(ctx, client, cronFrequencyInterval)
+	// Parse the current request count or initialize to 0
+	var requestCount int64 = 0
+	if val != "" {
+		requestCount, err = strconv.ParseInt(val, 10, 64)
 		if err != nil {
-			slog.Error("Error calculating next cleanup time", "error", err)
+			slog.Error("Error converting request count", "error", err)
+			http.Error(c.Writer, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
+	}
 
-		addRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window),
-			secondsDifference)
+	// Check if the request count exceeds the limit
+	if requestCount >= rl.limit {
+		slog.Warn("Request limit exceeded", "count", requestCount)
+		addRateLimitHeaders(c.Writer, rl.limit, rl.limit-(requestCount+1), requestCount+1, currentWindow+int64(rl.window), 0)
+		http.Error(c.Writer, "429 - Too Many Requests", http.StatusTooManyRequests)
+		return
+	}
 
-		slog.Info("Request processed", "count", requestCount+1)
-		next.ServeHTTP(w, r)
-	})
+	// Increment the request count
+	if requestCount, err = rl.client.Client.Incr(ctx, key).Result(); err != nil {
+		slog.Error("Error incrementing request count", "error", err)
+		http.Error(c.Writer, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Set the key expiry if it's newly created
+	if requestCount == 1 {
+		if err := rl.client.Client.Expire(ctx, key, time.Duration(rl.window)*time.Second).Err(); err != nil {
+			slog.Error("Error setting expiry for request count", "error", err)
+		}
+	}
+
+	secondsDifference, err := calculateNextCleanupTime(ctx, rl.client, rl.cronFrequencyInterval)
+	if err != nil {
+		slog.Error("Error calculating next cleanup time", "error", err)
+	}
+
+	addRateLimitHeaders(c.Writer, rl.limit, rl.limit-(requestCount+1), requestCount+1, currentWindow+int64(rl.window),
+		secondsDifference)
+
+	slog.Info("Request processed", "count", requestCount+1)
+	c.Next()
 }
 
 func calculateNextCleanupTime(ctx context.Context, client *db.DiceDB, cronFrequencyInterval time.Duration) (int64, error) {
@@ -186,6 +203,7 @@ func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, wi
 }
 
 func addRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTime, secondsLeftForCleanup int64) {
+
 	w.Header().Set("x-ratelimit-limit", strconv.FormatInt(limit, 10))
 	w.Header().Set("x-ratelimit-remaining", strconv.FormatInt(remaining, 10))
 	w.Header().Set("x-ratelimit-used", strconv.FormatInt(used, 10))
