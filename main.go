@@ -57,13 +57,19 @@ func main() {
 		c.Next()
 	})
 
+	router.Use(middleware.TrailingSlashMiddleware)
 	router.Use((middleware.NewRateLimiterMiddleware(diceDBAdminClient,
 		configValue.Server.RequestLimitPerMin,
 		configValue.Server.RequestWindowSec,
 	).Exec))
 
-	httpServer := server.NewHTTPServer(router, nil, diceDBAdminClient, diceDBClient, configValue.Server.RequestLimitPerMin,
-		configValue.Server.RequestWindowSec)
+	httpServer := server.NewHTTPServer(
+		router,
+		diceDBAdminClient,
+		diceDBClient,
+		configValue.Server.RequestLimitPerMin,
+		configValue.Server.RequestWindowSec,
+	)
 
 	// Register routes
 	router.GET("/health", gin.WrapF(httpServer.HealthCheck))

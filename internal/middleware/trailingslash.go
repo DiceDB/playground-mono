@@ -3,19 +3,19 @@ package middleware
 import (
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
-func TrailingSlashMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" && strings.HasSuffix(r.URL.Path, "/") {
-			newPath := strings.TrimSuffix(r.URL.Path, "/")
-			newURL := newPath
-			if r.URL.RawQuery != "" {
-				newURL += "?" + r.URL.RawQuery
-			}
-			http.Redirect(w, r, newURL, http.StatusMovedPermanently)
-			return
+func TrailingSlashMiddleware(c *gin.Context) {
+	if c.Request.URL.Path != "/" && strings.HasSuffix(c.Request.URL.Path, "/") {
+		newPath := strings.TrimSuffix(c.Request.URL.Path, "/")
+		newURL := newPath
+		if c.Request.URL.RawQuery != "" {
+			newURL += "?" + c.Request.URL.RawQuery
 		}
-		next.ServeHTTP(w, r)
-	})
+		http.Redirect(c.Writer, c.Request, newURL, http.StatusMovedPermanently)
+		return
+	}
+	c.Next()
 }

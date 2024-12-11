@@ -6,11 +6,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"server/internal/db"
-	"server/internal/middleware"
 	util "server/util"
 
 	"github.com/gin-gonic/gin"
@@ -19,11 +17,6 @@ import (
 type HTTPServer struct {
 	httpServer *http.Server
 	DiceClient *db.DiceDB
-}
-
-type HandlerMux struct {
-	mux         *http.ServeMux
-	rateLimiter func(http.ResponseWriter, *http.Request, http.Handler)
 }
 
 type HTTPResponse struct {
@@ -45,14 +38,7 @@ func errorResponse(response string) string {
 	return string(jsonResponse)
 }
 
-func (cim *HandlerMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	middleware.TrailingSlashMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.ToLower(r.URL.Path)
-		cim.rateLimiter(w, r, cim.mux)
-	})).ServeHTTP(w, r)
-}
-
-func NewHTTPServer(router *gin.Engine, mux *http.ServeMux, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
+func NewHTTPServer(router *gin.Engine, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
 	limit int64, window float64) *HTTPServer {
 
 	return &HTTPServer{
