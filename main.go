@@ -7,6 +7,7 @@ import (
 	"os"
 	"server/config"
 	"server/internal/db"
+	"server/internal/middleware"
 	"server/internal/server"
 	"sync"
 
@@ -56,8 +57,19 @@ func main() {
 		c.Next()
 	})
 
-	httpServer := server.NewHTTPServer(":8080", nil, diceDBAdminClient, diceDBClient, configValue.Server.RequestLimitPerMin,
-		configValue.Server.RequestWindowSec)
+	router.Use(middleware.TrailingSlashMiddleware)
+	router.Use((middleware.NewRateLimiterMiddleware(diceDBAdminClient,
+		configValue.Server.RequestLimitPerMin,
+		configValue.Server.RequestWindowSec,
+	).Exec))
+
+	httpServer := server.NewHTTPServer(
+		router,
+		diceDBAdminClient,
+		diceDBClient,
+		configValue.Server.RequestLimitPerMin,
+		configValue.Server.RequestWindowSec,
+	)
 
 	// Register routes
 	router.GET("/health", gin.WrapF(httpServer.HealthCheck))
@@ -68,7 +80,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		// Run the HTTP Server
-		if err := router.Run(":8080"); err != nil {
+		if err := httpServer.Run(context.Background()); err != nil {
 			slog.Error("server failed: %v\n", slog.Any("err", err))
 			diceDBAdminClient.CloseDiceDB()
 			cancel()
