@@ -40,7 +40,6 @@ func errorResponse(response string) string {
 
 func NewHTTPServer(router *gin.Engine, diceDBAdminClient *db.DiceDB, diceClient *db.DiceDB,
 	limit int64, window float64) *HTTPServer {
-
 	return &HTTPServer{
 		httpServer: &http.Server{
 			Addr:              ":8080",

@@ -23,7 +23,6 @@ type (
 		client                *db.DiceDB
 		limit                 int64
 		window                float64
-		conf                  *config.Config
 		cronFrequencyInterval time.Duration
 	}
 )
@@ -203,7 +202,6 @@ func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, wi
 }
 
 func addRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTime, secondsLeftForCleanup int64) {
-
 	w.Header().Set("x-ratelimit-limit", strconv.FormatInt(limit, 10))
 	w.Header().Set("x-ratelimit-remaining", strconv.FormatInt(remaining, 10))
 	w.Header().Set("x-ratelimit-used", strconv.FormatInt(used, 10))

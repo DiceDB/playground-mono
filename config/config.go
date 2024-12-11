@@ -117,15 +117,6 @@ func getEnvArray(key string, fallback []string) []string {
 	return fallback
 }
 
-func getEnvBool(key string, fallback bool) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
-		}
-	}
-	return fallback
-}
-
 // splitString splits a string by comma and returns a slice of strings
 func splitString(s string) []string {
 	var array []string
