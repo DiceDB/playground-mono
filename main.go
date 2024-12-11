@@ -15,6 +15,11 @@ import (
 )
 
 func main() {
+	// Set Gin to release mode for production
+	if os.Getenv("ENVIRONMENT") == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	configValue := config.LoadConfig()
 	diceDBAdminClient, err := db.InitDiceClient(configValue, true)
 	if err != nil {
