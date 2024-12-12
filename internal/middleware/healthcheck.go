@@ -13,7 +13,6 @@ import (
 	"github.com/dicedb/dicedb-go"
 	"github.com/gin-gonic/gin"
 	"server/internal/db"
-	// util "server/util"
 )
 
 // HealthCheckMiddleware is a middleware that performs a health check on the server
@@ -26,10 +25,6 @@ type (
 		cronFrequencyInterval time.Duration
 	}
 )
-
-// type HealthCheckMiddleware struct {
-// 	RateLimiter *RateLimiterMiddleware
-// }
 
 // NewHealthCheckMiddleware creates a new instance of HealthCheckMiddleware.
 func NewHealthCheckMiddleware(client *db.DiceDB, limit int64, window float64) *HealthCheckMiddleware {
@@ -86,9 +81,6 @@ func (h *HealthCheckMiddleware) Exec(c *gin.Context) {
 
 	AddRateLimitHeaders(c.Writer, h.limit, h.limit-requestCount, requestCount, currentWindow+int64(h.window),
 		secondsDifference)
-
-
-	// util.JSONResponse(c.Writer, http.StatusOK, map[string]string{"message": "server is running"})
 
 
 	c.Writer.Header().Set("Content-Type", "application/json")
