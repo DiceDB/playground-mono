@@ -13,9 +13,18 @@ import (
 
 // HealthCheckMiddleware is a middleware that performs a health check on the server
 // and applies rate limiting if necessary using the RateLimiterMiddleware.
-type HealthCheckMiddleware struct {
-	RateLimiter *RateLimiterMiddleware
-}
+type (
+	HealthCheckMiddleware struct {
+		client                *db.DiceDB
+		limit                 int64
+		window                float64
+		cronFrequencyInterval time.Duration
+	}
+)
+
+// type HealthCheckMiddleware struct {
+// 	RateLimiter *RateLimiterMiddleware
+// }
 
 // NewHealthCheckMiddleware creates a new instance of HealthCheckMiddleware.
 func NewHealthCheckMiddleware(client *db.DiceDB, limit int64, window float64) *HealthCheckMiddleware {
