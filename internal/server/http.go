@@ -80,9 +80,9 @@ func (s *HTTPServer) Shutdown() error {
 	return s.httpServer.Shutdown(context.Background())
 }
 
-func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
-	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "server is running"})
-}
+// func (s *HTTPServer) HealthCheck(w http.ResponseWriter, request *http.Request) {
+// 	util.JSONResponse(w, http.StatusOK, map[string]string{"message": "server is running"})
+// }
 
 func (s *HTTPServer) CliHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("aasif request:", slog.Any("request=", r))

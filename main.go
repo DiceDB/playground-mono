@@ -63,6 +63,12 @@ func main() {
 		configValue.Server.RequestWindowSec,
 	).Exec))
 
+	// HealthCheck middleware
+	router.Use((middleware.HealthCheckMiddleware(diceDBAdminClient,
+		configValue.Server.RequestLimitPerMin,
+		configValue.Server.RequestWindowSec,
+	).Exec))
+
 	httpServer := server.NewHTTPServer(
 		router,
 		diceDBAdminClient,
@@ -72,7 +78,7 @@ func main() {
 	)
 
 	// Register routes
-	router.GET("/health", gin.WrapF(httpServer.HealthCheck))
+	// router.GET("/health", gin.WrapF(httpServer.HealthCheck))
 	router.POST("/shell/exec/:cmd", gin.WrapF(httpServer.CliHandler))
 	router.GET("/search", gin.WrapF(httpServer.SearchHandler))
 
