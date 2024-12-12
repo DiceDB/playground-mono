@@ -7,7 +7,7 @@ import (
 	"server/config"
 	"github.com/gin-gonic/gin"
 	"server/internal/db"
-	util "server/util"
+	// util "server/util"
 )
 
 // HealthCheckMiddleware is a middleware that performs a health check on the server
@@ -70,8 +70,15 @@ func (h *HealthCheckMiddleware) Exec(c *gin.Context) {
 		secondsDifference)
 
 
-	util.JSONResponse(c.Writer, http.StatusOK, map[string]string{"message": "server is running"})
-	
+	// util.JSONResponse(c.Writer, http.StatusOK, map[string]string{"message": "server is running"})
+
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.Writer.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(c.Writer).Encode(map[string]string{"message": "server is running"}); err != nil {
+		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+	}
+
 	c.Next()
 }
 
