@@ -76,6 +76,8 @@ func (rl *RateLimiterMiddleware) Exec(c *gin.Context) {
 		}
 	}
 
+	slog.Info("Fetched and parsed request count successfully", "key", key, "requestCount", requestCount)
+
 	// Check if the request count exceeds the limit
 	if requestCount >= rl.limit {
 		slog.Warn("Request limit exceeded", "count", requestCount)
