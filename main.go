@@ -64,7 +64,7 @@ func main() {
 	).Exec))
 
 	// HealthCheck middleware
-	router.Use((middleware.HealthCheckMiddleware(diceDBAdminClient,
+	router.Use((middleware.NewHealthCheckMiddleware(diceDBAdminClient,
 		configValue.Server.RequestLimitPerMin,
 		configValue.Server.RequestWindowSec,
 	).Exec))
