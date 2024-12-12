@@ -79,7 +79,7 @@ func (rl *RateLimiterMiddleware) Exec(c *gin.Context) {
 	// Check if the request count exceeds the limit
 	if requestCount >= rl.limit {
 		slog.Warn("Request limit exceeded", "count", requestCount)
-		addRateLimitHeaders(c.Writer, rl.limit, rl.limit-(requestCount+1), requestCount+1, currentWindow+int64(rl.window), 0)
+		AddRateLimitHeaders(c.Writer, rl.limit, rl.limit-(requestCount+1), requestCount+1, currentWindow+int64(rl.window), 0)
 		http.Error(c.Writer, "429 - Too Many Requests", http.StatusTooManyRequests)
 		return
 	}
@@ -103,7 +103,7 @@ func (rl *RateLimiterMiddleware) Exec(c *gin.Context) {
 		slog.Error("Error calculating next cleanup time", "error", err)
 	}
 
-	addRateLimitHeaders(c.Writer, rl.limit, rl.limit-(requestCount+1), requestCount+1, currentWindow+int64(rl.window),
+	AddRateLimitHeaders(c.Writer, rl.limit, rl.limit-(requestCount+1), requestCount+1, currentWindow+int64(rl.window),
 		secondsDifference)
 
 	slog.Info("Request processed", "count", requestCount+1)
@@ -173,7 +173,7 @@ func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, wi
 		// Check if the request limit has been exceeded
 		if requestCount >= limit {
 			slog.Warn("Request limit exceeded", "count", requestCount)
-			addRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window), 0)
+			AddRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window), 0)
 			http.Error(w, "429 - Too Many Requests", http.StatusTooManyRequests)
 			return
 		}
@@ -194,14 +194,14 @@ func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, wi
 			}
 		}
 
-		addRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window), 0)
+		AddRateLimitHeaders(w, limit, limit-(requestCount+1), requestCount+1, currentWindow+int64(window), 0)
 
 		slog.Info("Request processed", "count", requestCount)
 		next.ServeHTTP(w, r)
 	})
 }
 
-func addRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTime, secondsLeftForCleanup int64) {
+func AddRateLimitHeaders(w http.ResponseWriter, limit, remaining, used, resetTime, secondsLeftForCleanup int64) {
 	w.Header().Set("x-ratelimit-limit", strconv.FormatInt(limit, 10))
 	w.Header().Set("x-ratelimit-remaining", strconv.FormatInt(remaining, 10))
 	w.Header().Set("x-ratelimit-used", strconv.FormatInt(used, 10))

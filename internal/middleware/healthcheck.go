@@ -1,0 +1,94 @@
+package middleware
+
+import (
+	"context"
+	"errors"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"time"
+	"server/config"
+	"strconv"
+	"github.com/dicedb/dicedb-go"
+	"github.com/gin-gonic/gin"
+	"server/internal/db"
+)
+
+// HealthCheckMiddleware is a middleware that performs a health check on the server
+// and applies rate limiting if necessary using the RateLimiterMiddleware.
+type (
+	HealthCheckMiddleware struct {
+		client                *db.DiceDB
+		limit                 int64
+		window                float64
+		cronFrequencyInterval time.Duration
+	}
+)
+
+// NewHealthCheckMiddleware creates a new instance of HealthCheckMiddleware.
+func NewHealthCheckMiddleware(client *db.DiceDB, limit int64, window float64) *HealthCheckMiddleware {
+	// Initialize RateLimiterMiddleware
+	h := &HealthCheckMiddleware{
+		client:                client,
+		limit:                 limit,
+		window:                window,
+		cronFrequencyInterval: config.LoadConfig().Server.CronCleanupFrequency,
+	}
+	return h
+}
+
+// Exec handles the health check request.
+func (h *HealthCheckMiddleware) Exec(c *gin.Context) {
+	// Only allow rate limiting for specific paths, here health check path
+
+	if c.Request.URL.Path != "/health" {
+		// If the path is not "/health", return immediately without further processing
+		c.Next()
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	currentWindow := time.Now().Unix() / int64(h.window)
+	key := fmt.Sprintf("request_count:%d", currentWindow)
+	slog.Debug("Created rate limiter key", slog.Any("key", key))
+
+	// Get the current request count for this window
+	val, err := h.client.Client.Get(ctx, key).Result()
+	if err != nil && !errors.Is(err, dicedb.Nil) {
+		slog.Error("Error fetching request count", "error", err)
+		http.Error(c.Writer, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	// Parse the current request count or initialize to 0
+	var requestCount int64 = 0
+	if val != "" {
+		requestCount, err = strconv.ParseInt(val, 10, 64)
+		if err != nil {
+			slog.Error("Error converting request count", "error", err)
+			http.Error(c.Writer, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+	slog.Info("Fetched and parsed request count successfully", "key", key, "requestCount", requestCount)
+
+	secondsDifference, err := calculateNextCleanupTime(ctx, h.client, h.cronFrequencyInterval)
+	if err != nil {
+		slog.Error("Error calculating next cleanup time", "error", err)
+	}
+
+	AddRateLimitHeaders(c.Writer, h.limit, h.limit-requestCount, requestCount, currentWindow+int64(h.window),
+		secondsDifference)
+
+
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.Writer.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(c.Writer).Encode(map[string]string{"message": "server is running"}); err != nil {
+		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
+	}
+
+	c.Next()
+}
+
