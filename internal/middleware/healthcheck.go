@@ -29,13 +29,13 @@ type (
 // NewHealthCheckMiddleware creates a new instance of HealthCheckMiddleware.
 func NewHealthCheckMiddleware(client *db.DiceDB, limit int64, window float64) *HealthCheckMiddleware {
 	// Initialize RateLimiterMiddleware
-	h = &HealthCheckMiddleware{
+	h := &HealthCheckMiddleware{
 		client:                client,
 		limit:                 limit,
 		window:                window,
 		cronFrequencyInterval: config.LoadConfig().Server.CronCleanupFrequency,
 	}
-	return
+	return h
 }
 
 // Exec handles the health check request.
