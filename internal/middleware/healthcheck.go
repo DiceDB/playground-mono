@@ -77,6 +77,7 @@ func (h *HealthCheckMiddleware) Exec(c *gin.Context) {
 			return
 		}
 	}
+	slog.Info("Fetched and parsed request count successfully", "key", key, "requestCount", requestCount)
 
 	secondsDifference, err := calculateNextCleanupTime(ctx, h.client, h.cronFrequencyInterval)
 	if err != nil {
