@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 	"server/config"
@@ -19,7 +20,7 @@ type HealthCheckMiddleware struct {
 // NewHealthCheckMiddleware creates a new instance of HealthCheckMiddleware.
 func NewHealthCheckMiddleware(client *db.DiceDB, limit int64, window float64) *HealthCheckMiddleware {
 	// Initialize RateLimiterMiddleware
-	rl = &HealthCheckMiddleware{
+	h = &HealthCheckMiddleware{
 		client:                client,
 		limit:                 limit,
 		window:                window,
@@ -37,13 +38,15 @@ func (h *HealthCheckMiddleware) Exec(c *gin.Context) {
 		c.Next()
 		return
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	currentWindow := time.Now().Unix() / int64(rl.window)
+	currentWindow := time.Now().Unix() / int64(h.window)
 	key := fmt.Sprintf("request_count:%d", currentWindow)
 	slog.Debug("Created rate limiter key", slog.Any("key", key))
 
 	// Get the current request count for this window
-	val, err := rl.client.Client.Get(ctx, key).Result()
+	val, err := h.client.Client.Get(ctx, key).Result()
 	if err != nil && !errors.Is(err, dicedb.Nil) {
 		slog.Error("Error fetching request count", "error", err)
 		http.Error(c.Writer, "Internal Server Error", http.StatusInternalServerError)
