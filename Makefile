@@ -33,3 +33,7 @@ check-golangci-lint:
 		echo "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.60.1"; \
 		exit 1; \
 	fi
+
+push-binary-remote:
+	$(MAKE) build
+	scp -i ${SSH_PEM_PATH} ./playground-mono ubuntu@${REMOTE_HOST}:.

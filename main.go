@@ -7,13 +7,20 @@ import (
 	"os"
 	"server/config"
 	"server/internal/db"
+	"server/internal/middleware"
 	"server/internal/server"
 	"sync"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
+	// Set Gin to release mode for production
+	if os.Getenv("ENVIRONMENT") == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	configValue := config.LoadConfig()
 	diceDBAdminClient, err := db.InitDiceClient(configValue, true)
 	if err != nil {
@@ -35,19 +42,45 @@ func main() {
 	wg.Add(1)
 	go cleanupManager.Run(ctx, &wg)
 
-	// Create mux and register routes
-	mux := http.NewServeMux()
-	httpServer := server.NewHTTPServer(":8080", mux, diceDBAdminClient, diceDBClient, configValue.Server.RequestLimitPerMin,
-		configValue.Server.RequestWindowSec)
-	mux.HandleFunc("/health", httpServer.HealthCheck)
-	mux.HandleFunc("/shell/exec/{cmd}", httpServer.CliHandler)
-	mux.HandleFunc("/search", httpServer.SearchHandler)
+	// Create Gin router
+	router := gin.Default()
+
+	// CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+		c.Next()
+	})
+
+	router.Use(middleware.TrailingSlashMiddleware)
+	router.Use((middleware.NewRateLimiterMiddleware(diceDBAdminClient,
+		configValue.Server.RequestLimitPerMin,
+		configValue.Server.RequestWindowSec,
+	).Exec))
+
+	httpServer := server.NewHTTPServer(
+		router,
+		diceDBAdminClient,
+		diceDBClient,
+		configValue.Server.RequestLimitPerMin,
+		configValue.Server.RequestWindowSec,
+	)
+
+	// Register routes
+	router.GET("/health", gin.WrapF(httpServer.HealthCheck))
+	router.POST("/shell/exec/:cmd", gin.WrapF(httpServer.CliHandler))
+	router.GET("/search", gin.WrapF(httpServer.SearchHandler))
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		// Run the HTTP Server
-		if err := httpServer.Run(ctx); err != nil {
+		if err := httpServer.Run(context.Background()); err != nil {
 			slog.Error("server failed: %v\n", slog.Any("err", err))
 			diceDBAdminClient.CloseDiceDB()
 			cancel()

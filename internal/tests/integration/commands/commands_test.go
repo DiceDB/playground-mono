@@ -29,8 +29,7 @@ func TestMain(m *testing.M) {
 	}
 	diceDBAddr := "localhost:" + port.Port()
 	os.Setenv("DICEDB_ADDR", diceDBAddr)
-
-	os.Setenv("IS_TEST_ENVIRONMENT", "true")
+	os.Setenv("ENVIRONMENT", "local")
 
 	code := m.Run()
 	os.Exit(code)

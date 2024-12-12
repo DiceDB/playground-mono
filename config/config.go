@@ -28,7 +28,7 @@ type Config struct {
 	}
 	Server struct {
 		Port                 string // Field for the server port
-		IsTestEnv            bool
+		Environment          string
 		RequestLimitPerMin   int64         // Field for the request limit
 		RequestWindowSec     float64       // Field for the time window in float64
 		AllowedOrigins       []string      // Field for the allowed origins
@@ -49,9 +49,12 @@ func LoadConfig() *Config {
 			Username string
 			Password string
 		}{
-			Addr:     getEnv("DICEDB_ADMIN_ADDR", "192.168.1.13:7379"), // Default DiceDB Admin address
+			Addr:     getEnv("DICEDB_ADMIN_ADDR", "192.168.1.4:7379"), // Default DiceDB Admin address
 			Username: getEnv("DICEDB_ADMIN_USERNAME", "diceadmin"),  // Default DiceDB Admin username
 			Password: getEnv("DICEDB_ADMIN_PASSWORD", ""),           // Default DiceDB Admin password
+			Addr:     getEnv("DICEDB_METADATA_ADDR", "192.168.1.4:7379"), // Default DiceDB Admin address
+			Username: getEnv("DICEDB_METADATA_USERNAME", "diceadmin"),  // Default DiceDB Admin username
+			Password: getEnv("DICEDB_METADATA_PASSWORD", ""),           // Default DiceDB Admin password
 		},
 		DiceDB: struct {
 			Addr     string
@@ -64,14 +67,14 @@ func LoadConfig() *Config {
 		},
 		Server: struct {
 			Port                 string
-			IsTestEnv            bool
+			Environment          string
 			RequestLimitPerMin   int64
 			RequestWindowSec     float64
 			AllowedOrigins       []string
 			CronCleanupFrequency time.Duration
 		}{
-			Port:                 getEnv("SERVER_PORT", ":8080"),
-			IsTestEnv:            getEnvBool("IS_TEST_ENVIRONMENT", false),                                  // Default server port
+			Port:                 getEnv("PORT", ":8080"),
+			Environment:          getEnv("ENVIRONMENT", "local"),
 			RequestLimitPerMin:   getEnvInt("REQUEST_LIMIT_PER_MIN", 1000),                                  // Default request limit
 			RequestWindowSec:     getEnvFloat64("REQUEST_WINDOW_SEC", 60),                                   // Default request window in float64
 			AllowedOrigins:       getEnvArray("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),         // Default allowed origins
@@ -112,15 +115,6 @@ func getEnvArray(key string, fallback []string) []string {
 	if value, exists := os.LookupEnv(key); exists {
 		if arrayValue := splitString(value); len(arrayValue) > 0 {
 			return arrayValue
-		}
-	}
-	return fallback
-}
-
-func getEnvBool(key string, fallback bool) bool {
-	if value, exists := os.LookupEnv(key); exists {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
 		}
 	}
 	return fallback
