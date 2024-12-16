@@ -39,10 +39,6 @@ func NewRateLimiterMiddleware(client *db.DiceDB, limit int64, window float64) (r
 
 // RateLimiter middleware to limit requests based on a specified limit and duration
 func (rl *RateLimiterMiddleware) Exec(c *gin.Context) {
-	if handleCors(c.Writer, c.Request) {
-		return
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -133,10 +129,6 @@ func calculateNextCleanupTime(ctx context.Context, client *db.DiceDB, cronFreque
 
 func MockRateLimiter(client *mock.DiceDBMock, next http.Handler, limit int64, window float64) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if handleCors(w, r) {
-			return
-		}
-
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 

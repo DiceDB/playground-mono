@@ -56,7 +56,6 @@ func main() {
 		}
 		c.Next()
 	})
-
 	router.Use(middleware.TrailingSlashMiddleware)
 	router.Use((middleware.NewRateLimiterMiddleware(diceDBAdminClient,
 		configValue.Server.RequestLimitPerMin,
