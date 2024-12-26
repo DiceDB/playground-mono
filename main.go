@@ -47,10 +47,36 @@ func main() {
 
 	// CORS middleware
 	router.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		allowedOrigins := configValue.Server.AllowedOrigins
+		isAllowed := false
+
+		if len(allowedOrigins) == 0 {
+			// Allow all origins, if none are specified in config
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		} else {
+			for _, allowedOrigin := range allowedOrigins {
+				if origin == allowedOrigin {
+					isAllowed = true
+					break
+				}
+			}
+
+			if isAllowed {
+				c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			} else {
+				http.Error(c.Writer, "403 - Forbidden", http.StatusForbidden)
+				c.Abort()
+				return
+			}
+		}
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
 		if c.Request.Method == "OPTIONS" {
+			if len(allowedOrigins) == 0 || isAllowed {
+				c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			}
 			c.AbortWithStatus(http.StatusOK)
 			return
 		}
